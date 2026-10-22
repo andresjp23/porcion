@@ -6,6 +6,8 @@ PWA mobile-first para registrar comidas, calorías y macros, y seguir el peso. M
 
 ## Lee esto antes de programar
 
+> `docs/` es solo local: está en `.gitignore` y no se sube a GitHub.
+
 | Archivo | Qué contiene |
 |---|---|
 | `docs/spec.md` | Qué hace la app: alcance, historias de usuario, criterios de aceptación y reglas de negocio |

@@ -13,3 +13,6 @@ test-results
 supabase/.temp
 supabase/.branches
 dev-dist
+
+# Specs and plans stay local only
+docs/
