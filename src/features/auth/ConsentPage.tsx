@@ -32,11 +32,13 @@ export function ConsentPage() {
   const onSubmit = handleSubmit(async () => {
     setFormError(null)
     // The server stamps privacy_accepted_at (profiles_stamp_consent).
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .update({ privacy_version: PRIVACY_VERSION })
       .eq('id', userId)
-    if (error) {
+      .select('id')
+    // An update that matches no row is not an error for PostgREST (e.g. a stale session).
+    if (error || data.length === 0) {
       setFormError('No pudimos guardar tu respuesta. Inténtalo de nuevo en un momento.')
       return
     }

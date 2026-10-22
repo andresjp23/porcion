@@ -44,17 +44,21 @@ describe('ConsentPage', () => {
   })
 
   it('saves the policy version on the own profile and goes to Hoy', async () => {
-    mock.query.eq.mockResolvedValue({ error: null })
+    mock.query.select.mockResolvedValue({ data: [{ id: 'user-1' }], error: null })
     renderConsent()
     await acceptAll()
     expect(supabase.from).toHaveBeenCalledWith('profiles')
     expect(mock.query.update).toHaveBeenCalledWith({ privacy_version: PRIVACY_VERSION })
     expect(mock.query.eq).toHaveBeenCalledWith('id', 'user-1')
+    expect(mock.query.select).toHaveBeenCalledWith('id')
     expect(await screen.findByRole('heading', { name: 'Hoy' })).toBeInTheDocument()
   })
 
-  it('stays on the page if saving fails', async () => {
-    mock.query.eq.mockResolvedValue({ error: { message: 'x' } })
+  it.each([
+    ['saving fails', { data: null, error: { message: 'x' } }],
+    ['no profile row was updated', { data: [], error: null }],
+  ])('stays on the page if %s', async (_, result) => {
+    mock.query.select.mockResolvedValue(result)
     renderConsent()
     await acceptAll()
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos guardar tu respuesta.')

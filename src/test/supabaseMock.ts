@@ -4,6 +4,7 @@
 
 const update = vi.fn()
 const eq = vi.fn()
+const select = vi.fn()
 
 export const supabase = {
   auth: {
@@ -13,9 +14,10 @@ export const supabase = {
     signUp: vi.fn(),
     signOut: vi.fn(),
   },
-  // Covers `from(table).update(values).eq(column, value)`.
+  // Covers `from(table).update(values).eq(column, value).select(columns)`.
   from: vi.fn(() => ({ update })),
-  query: { update, eq },
+  query: { update, eq, select },
 }
 
 update.mockImplementation(() => ({ eq }))
+eq.mockImplementation(() => ({ select }))
