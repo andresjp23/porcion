@@ -38,7 +38,7 @@ describe('ConsentPage', () => {
   })
 
   it('saves the policy version on the own profile and moves on', async () => {
-    queueQueryResult({ data: [{ id: 'user-1' }], error: null })
+    queueQueryResult('profiles', { data: [{ id: 'user-1' }], error: null })
     renderConsent()
     await acceptAll()
     expect(supabase.from).toHaveBeenCalledWith('profiles')
@@ -52,7 +52,7 @@ describe('ConsentPage', () => {
     ['saving fails', { data: null, error: { message: 'x' } }],
     ['no profile row was updated', { data: [], error: null }],
   ])('stays on the page if %s', async (_, result) => {
-    queueQueryResult(result)
+    queueQueryResult('profiles', result)
     renderConsent()
     await acceptAll()
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos guardar tu respuesta.')

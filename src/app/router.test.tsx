@@ -12,7 +12,7 @@ describe('router', () => {
 
   it('renders the Today page at / for a set-up user', async () => {
     const done = '2026-10-22T12:00:00Z'
-    queueQueryResult({
+    queueQueryResult('profiles', {
       data: { id: 'user-1', privacy_accepted_at: done, onboarding_completed_at: done },
       error: null,
     })

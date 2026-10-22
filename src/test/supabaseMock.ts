@@ -4,29 +4,55 @@
 
 type QueryResult = { data: unknown; error: unknown }
 
-const results: QueryResult[] = []
+const queued = new Map<string, QueryResult[]>()
+const defaults = new Map<string, QueryResult>()
+
+/** Spies shared by every query, to assert how a chain was built. */
+const query = {
+  select: vi.fn(),
+  update: vi.fn(),
+  upsert: vi.fn(),
+  eq: vi.fn(),
+  order: vi.fn(),
+  limit: vi.fn(),
+  maybeSingle: vi.fn(),
+}
 
 /**
  * A query builder like PostgREST's: every method chains, and awaiting the chain
- * resolves to the next result queued with `queueQueryResult`.
+ * resolves to the next result queued for its table, else the table's default.
  */
-const builder = {
-  select: vi.fn(() => builder),
-  update: vi.fn(() => builder),
-  eq: vi.fn(() => builder),
-  maybeSingle: vi.fn(() => builder),
-  then(resolve: (value: QueryResult) => unknown, reject?: (reason: unknown) => unknown) {
-    return Promise.resolve(results.shift() ?? { data: null, error: null }).then(resolve, reject)
-  },
+function builder(table: string) {
+  const chain: Record<string, unknown> = {}
+  for (const [name, spy] of Object.entries(query)) {
+    chain[name] = (...args: unknown[]) => {
+      spy(...args)
+      return chain
+    }
+  }
+  chain.then = (
+    resolve: (value: QueryResult) => unknown,
+    reject?: (reason: unknown) => unknown,
+  ) => {
+    const result = queued.get(table)?.shift() ?? defaults.get(table) ?? { data: null, error: null }
+    return Promise.resolve(result).then(resolve, reject)
+  }
+  return chain
 }
 
-/** Queues what the next awaited `supabase.from(...)` chain returns. */
-export function queueQueryResult(...queued: QueryResult[]) {
-  results.push(...queued)
+/** Queues what the next awaited `supabase.from(table)` chains return, in order. */
+export function queueQueryResult(table: string, ...results: QueryResult[]) {
+  queued.set(table, [...(queued.get(table) ?? []), ...results])
+}
+
+/** What `supabase.from(table)` returns once its queue is empty (e.g. refetches). */
+export function setTableDefault(table: string, result: QueryResult) {
+  defaults.set(table, result)
 }
 
 export function resetQueryResults() {
-  results.length = 0
+  queued.clear()
+  defaults.clear()
 }
 
 export const supabase = {
@@ -39,6 +65,6 @@ export const supabase = {
     resetPasswordForEmail: vi.fn(),
     updateUser: vi.fn(),
   },
-  from: vi.fn(() => builder),
-  query: builder,
+  from: vi.fn(builder),
+  query,
 }
