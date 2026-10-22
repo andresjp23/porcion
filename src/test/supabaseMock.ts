@@ -13,6 +13,8 @@ export const supabase = {
     signInWithOAuth: vi.fn(),
     signUp: vi.fn(),
     signOut: vi.fn(),
+    resetPasswordForEmail: vi.fn(),
+    updateUser: vi.fn(),
   },
   // Covers `from(table).update(values).eq(column, value).select(columns)`.
   from: vi.fn(() => ({ update })),
