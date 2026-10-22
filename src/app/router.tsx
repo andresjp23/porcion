@@ -1,4 +1,5 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
+import { LoginPage } from '@/features/auth/LoginPage'
 import { TodayPage } from '@/features/today/TodayPage'
 
 const devRoutes: RouteObject[] = [
@@ -10,6 +11,7 @@ const devRoutes: RouteObject[] = [
 
 export const routes: RouteObject[] = [
   { path: '/', element: <TodayPage /> },
+  { path: '/login', element: <LoginPage /> },
   ...(import.meta.env.DEV ? devRoutes : []),
 ]
 
