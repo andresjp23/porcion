@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Provisional logo: an accent "portion" ring on graphite (docs/ui.md tokens). -->
+  <rect width="512" height="512" rx="112" fill="#3A3A40"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#4A4A51" stroke-width="56"/>
+  <path d="M256 106 A150 150 0 1 1 129.3 336.4" fill="none" stroke="#E9E23B" stroke-width="56" stroke-linecap="round"/>
+</svg>

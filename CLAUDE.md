@@ -40,6 +40,7 @@ npm run test:e2e      # Playwright (pendiente, Q-1)
 npm run lint          # ESLint
 npm run typecheck     # tsc -b --noEmit
 npm run format        # Prettier (no formatea los .md)
+npm run pwa:assets    # regenera los íconos PWA desde public/logo.svg
 supabase start        # Supabase local (requiere Docker). Copia la URL y la anon key a .env.local
 npm run db:reset      # aplica migraciones + seed desde cero
 npm run db:types      # regenera src/lib/database.types.ts
