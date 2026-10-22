@@ -90,7 +90,7 @@ Los imports dentro de `src/` usan el alias `@/` (ej.: `@/domain/energy`).
 - Al guardar datos de usuario, pide solo lo que la spec indica. No agregues campos personales nuevos sin actualizar la spec y la política de privacidad.
 
 **UI**
-- Textos de interfaz en español de Chile, neutro y cercano. El código, los nombres y los commits van en inglés.
+- Textos de interfaz en español de Chile, neutro y cercano. El código y los nombres van en inglés.
 - No uses hex sueltos en los componentes: usa los tokens de `docs/ui.md` (`src/styles/tokens.css`).
 - Mobile-first, con áreas táctiles de mínimo 44×44 px y contraste mínimo de 4.5:1 para texto.
 - Los botones de solo ícono llevan `aria-label` y todos los inputs llevan `<label>`.
@@ -98,6 +98,7 @@ Los imports dentro de `src/` usan el alias `@/` (ej.: `@/domain/energy`).
 
 **Flujo de trabajo**
 - Toma una tarea de `docs/tasks.md`, impleméntala, agrega o actualiza sus tests, verifica que `lint`, `typecheck` y `test` pasen, y marca la casilla.
-- Una tarea, un commit (o PR). Commits con Conventional Commits (`feat:`, `fix:`, `chore:`…).
+- Una tarea, un commit (o PR). Commits con Conventional Commits: el tipo en inglés (`feat:`, `fix:`, `chore:`…) y el mensaje en **español** (ej.: `feat: agrega cálculo de meta diaria (D-2)`).
+- Los commits y PRs no llevan atribución a Claude (`Co-Authored-By` ni similares).
 - Si descubres trabajo nuevo, agrégalo a `docs/tasks.md` en vez de hacerlo de pasada.
 - No agregues dependencias pesadas sin justificarlo en el commit.
