@@ -23,7 +23,61 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "profiles": {
+            "favorites": {
+                  Row: {
+                    "created_at": string,"food_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"food_id": string,"user_id"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"food_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "favorites_food_id_fkey"
+      columns: ["food_id"]
+isOneToOne: false
+      referencedRelation: "foods"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"food_portions": {
+                  Row: {
+                    "food_id": string,"grams": number,"id": string,"is_default": boolean,"name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "food_id": string,"grams": number,"id"?: string,"is_default"?: boolean,"name": string
+                  }
+                  Update: {
+                    "food_id"?: string,"grams"?: number,"id"?: string,"is_default"?: boolean,"name"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "food_portions_food_id_fkey"
+      columns: ["food_id"]
+isOneToOne: false
+      referencedRelation: "foods"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"foods": {
+                  Row: {
+                    "aliases": (string)[],"barcode": string | null,"basis": Database["public"]['Enums']["food_basis"],"brand": string | null,"carbs_100": number,"created_at": string,"created_by": string | null,"fat_100": number,"id": string,"kcal_100": number,"name": string,"open_reports": number,"protein_100": number,"search_text": string,"source": Database["public"]['Enums']["food_source"],"updated_at": string,"verified": boolean
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "aliases"?: (string)[],"barcode"?: string | null,"basis"?: Database["public"]['Enums']["food_basis"],"brand"?: string | null,"carbs_100": number,"created_at"?: string,"created_by"?: string | null,"fat_100": number,"id"?: string,"kcal_100": number,"name": string,"open_reports"?: number,"protein_100": number,"search_text"?: never,"source": Database["public"]['Enums']["food_source"],"updated_at"?: string,"verified"?: boolean
+                  }
+                  Update: {
+                    "aliases"?: (string)[],"barcode"?: string | null,"basis"?: Database["public"]['Enums']["food_basis"],"brand"?: string | null,"carbs_100"?: number,"created_at"?: string,"created_by"?: string | null,"fat_100"?: number,"id"?: string,"kcal_100"?: number,"name"?: string,"open_reports"?: number,"protein_100"?: number,"search_text"?: never,"source"?: Database["public"]['Enums']["food_source"],"updated_at"?: string,"verified"?: boolean
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"profiles": {
                   Row: {
                     "activity": Database["public"]['Enums']["activity_level"] | null,"birth_date": string | null,"carbs_g": number | null,"created_at": string,"display_name": string | null,"fat_g": number | null,"goal": Database["public"]['Enums']["goal_type"] | null,"height_cm": number | null,"id": string,"kcal_is_manual": boolean,"kcal_target": number | null,"macros_are_manual": boolean,"onboarding_completed_at": string | null,"privacy_accepted_at": string | null,"privacy_version": string | null,"protein_g": number | null,"sex": Database["public"]['Enums']["sex_for_calc"] | null,"timezone": string
                   }
@@ -57,8 +111,20 @@ export type Database = {
             [_ in never]: never
           }
           Functions: {
-            "has_consented":
+            "can_edit_food":
+{ Args: { "target_food_id": string }; Returns: boolean
+                           },
+"food_search_text":
+{ Args: { "aliases": (string)[],"brand": string,"name": string }; Returns: string
+                           },
+"has_consented":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"is_valid_gtin":
+{ Args: { "code": string }; Returns: boolean
+                           },
+"unaccent_immutable":
+{ Args: { "value": string }; Returns: string
                            }
           }
           Enums: {

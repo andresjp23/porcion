@@ -64,7 +64,8 @@ select is(
 
 reset role;
 select is(
-  (select count(*)::int from public.weight_entries),
+  (select count(*)::int from public.weight_entries
+   where user_id in ('44444444-4444-4444-4444-444444444444', '55555555-5555-5555-5555-555555555555')),
   1,
   'only the consented user''s entry exists'
 );
