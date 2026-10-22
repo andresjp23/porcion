@@ -1,0 +1,6 @@
+dist
+coverage
+package-lock.json
+docs/mockups
+src/lib/database.types.ts
+*.md
