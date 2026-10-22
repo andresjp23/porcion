@@ -14,6 +14,10 @@ type StepLayoutProps = {
   submitting: boolean
   /** Shown above the button when saving fails. */
   error?: string | null
+  /** Defaults to "Continuar". */
+  submitLabel?: string
+  /** Rendered under the main button, e.g. a secondary action. */
+  footer?: ReactNode
   children: ReactNode
 }
 
@@ -26,6 +30,8 @@ export function StepLayout({
   onSubmit,
   submitting,
   error,
+  submitLabel = 'Continuar',
+  footer,
   children,
 }: StepLayoutProps) {
   return (
@@ -70,8 +76,9 @@ export function StepLayout({
           </p>
         )}
         <Button type="submit" fullWidth className="mt-6" disabled={submitting}>
-          {submitting ? 'Guardando…' : 'Continuar'}
+          {submitting ? 'Guardando…' : submitLabel}
         </Button>
+        {footer}
       </form>
     </main>
   )

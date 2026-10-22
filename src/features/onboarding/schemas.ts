@@ -1,7 +1,12 @@
 import { z } from 'zod'
-import { ageInYears } from '@/domain/energy'
+import { ageInYears, isBelowFloor, type Sex } from '@/domain/energy'
+import { MAX_MACRO_GRAMS } from '@/domain/macros'
 
 const CHOOSE_ONE = 'Elige una opción'
+
+/** R-05: range for a kcal target set by hand. */
+export const MIN_MANUAL_KCAL = 500
+export const MAX_MANUAL_KCAL = 9999
 
 /** Accepts "80,5" as well as "80.5": a decimal comma is what people type in Chile. */
 function decimal(min: number, max: number, message: string) {
@@ -37,3 +42,33 @@ export const activitySchema = z.object({
 export const goalSchema = z.object({
   goal: z.enum(['lose', 'maintain', 'gain'], CHOOSE_ONE),
 })
+
+/** Whole numbers only, as typed in a text input. */
+function integer(min: number, max: number, message: string) {
+  return z
+    .string()
+    .trim()
+    .transform((value) => (/^\d+$/.test(value) ? Number(value) : Number.NaN))
+    .pipe(z.number(message).int(message).min(min, message).max(max, message))
+}
+
+const MACRO_MESSAGE = `Usa gramos enteros entre 0 y ${MAX_MACRO_GRAMS}`
+
+/**
+ * "Ajustar manualmente" (R-05, R-13). A target under the floor for the sex is
+ * allowed only after ticking the confirmation.
+ */
+export function adjustTargetSchema(sex: Sex) {
+  return z
+    .object({
+      kcal: integer(MIN_MANUAL_KCAL, MAX_MANUAL_KCAL, 'Usa una meta entre 500 y 9.999 kcal'),
+      protein: integer(0, MAX_MACRO_GRAMS, MACRO_MESSAGE),
+      carbs: integer(0, MAX_MACRO_GRAMS, MACRO_MESSAGE),
+      fat: integer(0, MAX_MACRO_GRAMS, MACRO_MESSAGE),
+      confirmBelowFloor: z.boolean(),
+    })
+    .refine((values) => !isBelowFloor(values.kcal, sex) || values.confirmBelowFloor, {
+      path: ['confirmBelowFloor'],
+      message: 'Confirma que quieres usar una meta bajo el mínimo recomendado',
+    })
+}
