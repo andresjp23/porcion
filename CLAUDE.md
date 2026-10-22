@@ -22,6 +22,7 @@ Si una tarea contradice la spec, se detiene y se pregunta. No se resuelve el con
 - **Frontend:** React 19 + TypeScript (strict) + Vite, Tailwind CSS v4, React Router, TanStack Query, `vite-plugin-pwa`
 - **Backend:** Supabase (Postgres, Auth, Row Level Security). No hay servidor propio en el MVP.
 - **Validación:** Zod para formularios y para las respuestas de APIs externas
+- **Formularios:** React Hook Form + Zod (`@hookform/resolvers/zod`) en todos los formularios. El esquema Zod es la única fuente de validación, y las reglas de negocio que use (rangos, 4/4/9, macros) vienen de `src/domain/`. Los inputs se conectan con `register`, o con `Controller` en los componentes controlados (Stepper, Segmented). `@hookform/resolvers` se queda en la v5 hasta que la v6 resuelva su conflicto de dependencias opcionales en npm.
 - **Gráficos:** SVG propio o una librería liviana (decidir en la fase de Progreso, ver `docs/tasks.md`)
 - **Escaneo:** API `BarcodeDetector` cuando exista y librería de respaldo para Safari (ver `docs/design.md`)
 - **Tests:** Vitest + Testing Library (unitarios y componentes), Playwright (flujos principales)
