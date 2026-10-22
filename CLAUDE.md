@@ -40,9 +40,10 @@ npm run test:e2e      # Playwright (pendiente, Q-1)
 npm run lint          # ESLint
 npm run typecheck     # tsc -b --noEmit
 npm run format        # Prettier (no formatea los .md)
-supabase start        # Supabase local, requiere Docker (pendiente, P-4)
-supabase db reset     # aplica migraciones + seed desde cero
-supabase gen types typescript --local > src/lib/database.types.ts
+supabase start        # Supabase local (requiere Docker). Copia la URL y la anon key a .env.local
+npm run db:reset      # aplica migraciones + seed desde cero
+npm run db:types      # regenera src/lib/database.types.ts
+npm run test:db       # tests pgTAP de supabase/tests (RLS, triggers)
 ```
 
 ## Estructura de carpetas
@@ -66,6 +67,7 @@ src/
   test/           # setup de Vitest
 supabase/
   migrations/     # SQL versionado, una migración por cambio
+  tests/database/ # tests pgTAP
   seed.sql        # alimentos base
 docs/
 ```
