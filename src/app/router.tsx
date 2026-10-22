@@ -4,7 +4,9 @@ import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
 import { SignupPage } from '@/features/auth/SignupPage'
+import { OnboardingPage } from '@/features/onboarding/OnboardingPage'
 import { TodayPage } from '@/features/today/TodayPage'
+import { StageGuard } from './StageGuard'
 
 const devRoutes: RouteObject[] = [
   {
@@ -14,12 +16,26 @@ const devRoutes: RouteObject[] = [
 ]
 
 export const routes: RouteObject[] = [
-  { path: '/', element: <TodayPage /> },
+  // Open to everyone. Sign-in and sign-up send signed-in users on to '/'.
   { path: '/login', element: <LoginPage /> },
   { path: '/signup', element: <SignupPage /> },
-  { path: '/consent', element: <ConsentPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/reset-password', element: <ResetPasswordPage /> },
+
+  // A-4: each group is only reachable at its stage of the funnel.
+  {
+    element: <StageGuard stage="consent" />,
+    children: [{ path: '/consent', element: <ConsentPage /> }],
+  },
+  {
+    element: <StageGuard stage="onboarding" />,
+    children: [{ path: '/onboarding/:step', element: <OnboardingPage /> }],
+  },
+  {
+    element: <StageGuard stage="app" />,
+    children: [{ path: '/', element: <TodayPage /> }],
+  },
+
   ...(import.meta.env.DEV ? devRoutes : []),
 ]
 

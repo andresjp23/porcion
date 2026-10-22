@@ -1,7 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Navigate, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
+import { profileKey } from '@/features/profile/useProfile'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/ui/Button'
 import { Card } from '@/ui/Card'
@@ -12,11 +14,13 @@ import { useAuth } from './useAuth'
 
 /**
  * HU-01 CA2 for Google sign-in, which cannot send consent at sign-up: the user
- * accepts here before any health data is saved.
+ * accepts here before any health data is saved. StageGuard only shows it to
+ * signed-in users who have not accepted yet.
  */
 export function ConsentPage() {
   const auth = useAuth()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [formError, setFormError] = useState<string | null>(null)
   const {
     register,
@@ -24,9 +28,7 @@ export function ConsentPage() {
     formState: { errors, isSubmitting },
   } = useForm<ConsentValues>({ resolver: zodResolver(consentSchema) })
 
-  if (auth.status === 'loading') return null
-  if (auth.status === 'signedOut') return <Navigate to="/login" replace />
-
+  if (auth.status !== 'signedIn') return null
   const userId = auth.session.user.id
 
   const onSubmit = handleSubmit(async () => {
@@ -42,6 +44,8 @@ export function ConsentPage() {
       setFormError('No pudimos guardar tu respuesta. Inténtalo de nuevo en un momento.')
       return
     }
+    // Refresh the profile so the guards see the consent before moving on.
+    await queryClient.invalidateQueries({ queryKey: profileKey(userId) })
     void navigate('/', { replace: true })
   })
 

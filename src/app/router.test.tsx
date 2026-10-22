@@ -1,11 +1,29 @@
-import { render, screen } from '@testing-library/react'
-import { createMemoryRouter, RouterProvider } from 'react-router'
+import { screen } from '@testing-library/react'
+import { renderWithAuth, resetSupabaseMock, signedInSession } from '@/test/renderWithAuth'
+import { queueQueryResult } from '@/test/supabaseMock'
 import { routes } from './router'
 
+vi.mock('@/lib/supabase', () => import('@/test/supabaseMock'))
+
 describe('router', () => {
-  it('renders the Today page at /', () => {
-    const router = createMemoryRouter(routes, { initialEntries: ['/'] })
-    render(<RouterProvider router={router} />)
-    expect(screen.getByRole('heading', { name: 'Hoy' })).toBeInTheDocument()
+  beforeEach(() => {
+    resetSupabaseMock()
+  })
+
+  it('renders the Today page at / for a set-up user', async () => {
+    const done = '2026-10-22T12:00:00Z'
+    queueQueryResult({
+      data: { id: 'user-1', privacy_accepted_at: done, onboarding_completed_at: done },
+      error: null,
+    })
+    renderWithAuth(routes, { path: '/', session: signedInSession })
+    expect(await screen.findByRole('heading', { name: 'Hoy' })).toBeInTheDocument()
+  })
+
+  it('shows Ingresar at / without a session', async () => {
+    renderWithAuth(routes, { path: '/' })
+    expect(
+      await screen.findByRole('heading', { name: 'Registra lo que comes en segundos' }),
+    ).toBeInTheDocument()
   })
 })

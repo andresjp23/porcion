@@ -1,21 +1,20 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { supabase } from '@/lib/supabase'
-import { renderWithAuth, signedInSession } from '@/test/renderWithAuth'
-import { supabase as mock } from '@/test/supabaseMock'
+import { renderWithAuth, resetSupabaseMock, signedInSession } from '@/test/renderWithAuth'
+import { supabase as mock, queueQueryResult } from '@/test/supabaseMock'
 import { PRIVACY_VERSION } from './consent'
 import { ConsentPage } from './ConsentPage'
 
 vi.mock('@/lib/supabase', () => import('@/test/supabaseMock'))
 
-function renderConsent(session: typeof signedInSession | null = signedInSession) {
+function renderConsent() {
   return renderWithAuth(
     [
       { path: '/consent', element: <ConsentPage /> },
       { path: '/', element: <h1>Hoy</h1> },
-      { path: '/login', element: <h1>Ingresar</h1> },
     ],
-    { path: '/consent', session },
+    { path: '/consent', session: signedInSession },
   )
 }
 
@@ -28,12 +27,7 @@ async function acceptAll() {
 
 describe('ConsentPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('sends signed-out visitors to Ingresar', async () => {
-    renderConsent(null)
-    expect(await screen.findByRole('heading', { name: 'Ingresar' })).toBeInTheDocument()
+    resetSupabaseMock()
   })
 
   it('requires both boxes before saving', async () => {
@@ -43,8 +37,8 @@ describe('ConsentPage', () => {
     expect(supabase.from).not.toHaveBeenCalled()
   })
 
-  it('saves the policy version on the own profile and goes to Hoy', async () => {
-    mock.query.select.mockResolvedValue({ data: [{ id: 'user-1' }], error: null })
+  it('saves the policy version on the own profile and moves on', async () => {
+    queueQueryResult({ data: [{ id: 'user-1' }], error: null })
     renderConsent()
     await acceptAll()
     expect(supabase.from).toHaveBeenCalledWith('profiles')
@@ -58,7 +52,7 @@ describe('ConsentPage', () => {
     ['saving fails', { data: null, error: { message: 'x' } }],
     ['no profile row was updated', { data: [], error: null }],
   ])('stays on the page if %s', async (_, result) => {
-    mock.query.select.mockResolvedValue(result)
+    queueQueryResult(result)
     renderConsent()
     await acceptAll()
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos guardar tu respuesta.')
