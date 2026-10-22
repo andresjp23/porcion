@@ -1,0 +1,35 @@
+<!-- Email change confirmation (A-5). Colors are the docs/ui.md tokens inlined: email clients do not support CSS variables. -->
+<div
+  style="
+    background: #f3f1ea;
+    padding: 32px 16px;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #131315;
+  "
+>
+  <div style="max-width: 480px; margin: 0 auto">
+    <h1 style="font-size: 24px; margin: 0 0 12px">Confirma tu nuevo correo</h1>
+    <p style="font-size: 16px; line-height: 1.5; color: #45453f; margin: 0 0 24px">
+      Pediste cambiar el correo de tu cuenta de Porción de {{ .Email }} a {{ .NewEmail }}.
+    </p>
+    <p style="margin: 0 0 24px">
+      <a
+        href="{{ .ConfirmationURL }}"
+        style="
+          display: inline-block;
+          background: #e9e23b;
+          color: #131315;
+          font-weight: bold;
+          font-size: 16px;
+          text-decoration: none;
+          padding: 14px 28px;
+          border-radius: 28px;
+        "
+        >Confirmar el cambio</a
+      >
+    </p>
+    <p style="font-size: 14px; line-height: 1.5; color: #5c5c57; margin: 0">
+      Si no lo pediste tú, ignora este correo: tu cuenta sigue con el correo actual.
+    </p>
+  </div>
+</div>
