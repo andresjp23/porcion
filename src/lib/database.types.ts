@@ -37,13 +37,29 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"weight_entries": {
+                  Row: {
+                    "created_at": string,"date": string,"user_id": string,"weight_kg": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"date": string,"user_id"?: string,"weight_kg": number
+                  }
+                  Update: {
+                    "created_at"?: string,"date"?: string,"user_id"?: string,"weight_kg"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "has_consented":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           }
           }
           Enums: {
             "activity_level": "sedentary"|"light"|"moderate"|"high"|"very_high","food_basis": "g"|"ml","food_source": "seed"|"off"|"user","goal_type": "lose"|"maintain"|"gain","list_status": "active"|"archived","meal_type": "breakfast"|"lunch"|"snack"|"dinner","report_status": "open"|"resolved"|"dismissed","sex_for_calc": "male"|"female"
