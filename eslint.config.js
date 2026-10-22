@@ -22,5 +22,22 @@ export default tseslint.config(
       globals: globals.browser,
     },
   },
+  {
+    // Colors come from tokens (src/styles/tokens.css), never raw hex values.
+    files: ['src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Literal[value=/#[0-9a-fA-F]{3,8}\\b/]',
+          message: 'Use a color token from src/styles/tokens.css instead of a raw hex value.',
+        },
+        {
+          selector: 'TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}\\b/]',
+          message: 'Use a color token from src/styles/tokens.css instead of a raw hex value.',
+        },
+      ],
+    },
+  },
   prettier,
 )

@@ -1,6 +1,16 @@
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter, type RouteObject } from 'react-router'
 import { TodayPage } from '@/features/today/TodayPage'
 
-export const routes = [{ path: '/', element: <TodayPage /> }]
+const devRoutes: RouteObject[] = [
+  {
+    path: '/dev/ui',
+    lazy: async () => ({ Component: (await import('./dev/DevUiPage')).DevUiPage }),
+  },
+]
+
+export const routes: RouteObject[] = [
+  { path: '/', element: <TodayPage /> },
+  ...(import.meta.env.DEV ? devRoutes : []),
+]
 
 export const router = createBrowserRouter(routes)

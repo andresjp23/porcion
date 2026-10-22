@@ -1,0 +1,33 @@
+/*
+ * Design tokens. Source of truth: docs/ui.md.
+ * Tailwind's default palette is removed so only these colors exist
+ * (e.g. bg-bg, text-ink, bg-surface, bg-accent, text-protein).
+ */
+@theme {
+  --color-*: initial;
+
+  --color-bg: #f3f1ea;
+  --color-ink: #131315;
+  --color-ink-muted: #5c5c57;
+  --color-ink-soft: #45453f;
+  --color-line: #d6d3c8;
+  --color-surface: #3a3a40;
+  --color-surface-2: #4a4a51;
+  --color-on-surface: #f4f4f5;
+  --color-on-surface-muted: #bdbdc4;
+  --color-accent: #e9e23b;
+  --color-on-accent: #131315;
+  --color-protein: #b66bf5;
+  --color-carbs: #e9e23b;
+  --color-fat: #ff7ab8;
+  --color-camera: #0e0e10;
+
+  --font-sans: 'Nunito Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card-lg: 32px;
+  --radius-card: 24px;
+  --radius-pill: 28px;
+  --radius-chip: 22px;
+  --radius-icon: 16px;
+  --radius-field: 14px;
+}
