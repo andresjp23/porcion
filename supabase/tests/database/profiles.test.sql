@@ -53,6 +53,9 @@ select throws_ok(
   'users cannot insert profiles directly'
 );
 
+-- Birth dates are health data, so test them as the user who accepted the policy.
+select set_config('request.jwt.claims', '{"sub": "11111111-1111-1111-1111-111111111111"}', true);
+
 select throws_ok(
   $$update public.profiles set birth_date = current_date - interval '17 years'$$,
   '23514',

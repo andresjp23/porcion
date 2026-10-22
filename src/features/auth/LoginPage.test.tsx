@@ -1,40 +1,21 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { createMemoryRouter, RouterProvider } from 'react-router'
 import { supabase } from '@/lib/supabase'
-import { AuthProvider } from './AuthProvider'
+import { renderWithAuth, signedInSession } from '@/test/renderWithAuth'
 import { LoginPage } from './LoginPage'
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    auth: {
-      onAuthStateChange: vi.fn(),
-      signInWithPassword: vi.fn(),
-      signInWithOAuth: vi.fn(),
-    },
-  },
-}))
+vi.mock('@/lib/supabase', () => import('@/test/supabaseMock'))
 
 const auth = vi.mocked(supabase.auth)
 
-function renderLogin({ session = null }: { session?: object | null } = {}) {
-  auth.onAuthStateChange.mockImplementation((callback) => {
-    callback('INITIAL_SESSION', session as never)
-    return { data: { subscription: { unsubscribe: vi.fn() } } } as never
-  })
-  const router = createMemoryRouter(
+function renderLogin(session: typeof signedInSession | null = null) {
+  return renderWithAuth(
     [
       { path: '/login', element: <LoginPage /> },
       { path: '/', element: <h1>Hoy</h1> },
     ],
-    { initialEntries: ['/login'] },
+    { path: '/login', session },
   )
-  render(
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>,
-  )
-  return router
 }
 
 async function fillAndSubmit(email: string, password: string) {
@@ -111,7 +92,7 @@ describe('LoginPage', () => {
   })
 
   it('sends a signed-in user to Hoy', async () => {
-    renderLogin({ session: { user: { id: 'u1' } } })
+    renderLogin(signedInSession)
     expect(await screen.findByRole('heading', { name: 'Hoy' })).toBeInTheDocument()
   })
 })
