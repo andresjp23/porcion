@@ -173,4 +173,50 @@ describe('FoodDetailPage', () => {
     expect(await screen.findByText('No encontramos este alimento')).toBeInTheDocument()
     expect(mock.from).not.toHaveBeenCalledWith('foods')
   })
+
+  it('shows "Datos en revisión" from 3 open reports on (HU-10 CA2)', async () => {
+    given(marraqueta({ source: 'user', open_reports: 3 }))
+    renderDetail()
+    expect(await screen.findByText('Datos en revisión.')).toBeInTheDocument()
+  })
+
+  it('does not show the notice below 3 open reports', async () => {
+    given(marraqueta({ source: 'user', open_reports: 2 }))
+    renderDetail()
+    await screen.findByRole('heading', { name: 'Marraqueta' })
+    expect(screen.queryByText('Datos en revisión.')).not.toBeInTheDocument()
+  })
+
+  it('reports an error in a community food (HU-10 CA1)', async () => {
+    given(marraqueta({ source: 'user' }))
+    setTableDefault('food_reports', { data: null, error: null })
+    renderDetail()
+    await userEvent.click(await screen.findByRole('button', { name: 'Reportar un error' }))
+
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar reporte' }))
+    expect(await screen.findByText('Cuéntanos qué dato está mal')).toBeInTheDocument()
+    expect(mock.query.insert).not.toHaveBeenCalled()
+
+    await userEvent.type(screen.getByLabelText('¿Qué dato está mal?'), 'Es por 100 ml')
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar reporte' }))
+    expect(mock.query.insert).toHaveBeenCalledWith({ food_id: FOOD_ID, reason: 'Es por 100 ml' })
+    expect(
+      await screen.findByText('Reportaste un error en este alimento. Gracias, lo vamos a revisar.'),
+    ).toBeInTheDocument()
+  })
+
+  it('thanks instead of asking again when the user already reported it', async () => {
+    given(marraqueta({ source: 'user' }))
+    setTableDefault('food_reports', { data: { id: 'report-1' }, error: null })
+    renderDetail()
+    expect(await screen.findByText(/Reportaste un error en este alimento/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Reportar un error' })).not.toBeInTheDocument()
+  })
+
+  it('does not offer reports for foods that are not from the community', async () => {
+    given(marraqueta())
+    renderDetail()
+    await screen.findByRole('heading', { name: 'Marraqueta' })
+    expect(screen.queryByRole('button', { name: 'Reportar un error' })).not.toBeInTheDocument()
+  })
 })

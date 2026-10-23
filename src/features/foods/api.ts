@@ -280,3 +280,41 @@ export function useCreateFood() {
     },
   })
 }
+
+const reportKey = (foodId: string) => ['foods', 'report', foodId] as const
+
+/** Whether the user already has an open report on this food (one per user, HU-10). */
+export function useHasOpenReport(foodId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: reportKey(foodId),
+    enabled,
+    queryFn: async ({ signal }) => {
+      const { data, error } = await supabase
+        .from('food_reports')
+        .select('id')
+        .eq('food_id', foodId)
+        .eq('status', 'open')
+        .abortSignal(signal)
+        .maybeSingle()
+      if (error) throw error
+      return data !== null
+    },
+  })
+}
+
+/** HU-10 CA1: reports wrong data in a community food. */
+export function useReportFood(foodId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (reason: string) => {
+      const { error } = await supabase.from('food_reports').insert({ food_id: foodId, reason })
+      // Already reported, maybe from another tab: the outcome is the same.
+      if (error && error.code !== UNIQUE_VIOLATION) throw error
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(reportKey(foodId), true)
+      // open_reports changed, and with it maybe "Datos en revisión".
+      void queryClient.invalidateQueries({ queryKey: foodDetailKeys.detail(foodId) })
+    },
+  })
+}

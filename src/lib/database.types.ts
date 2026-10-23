@@ -75,6 +75,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"food_reports": {
+                  Row: {
+                    "created_at": string,"food_id": string,"id": string,"reason": string,"reporter_id": string | null,"status": Database["public"]['Enums']["report_status"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"food_id": string,"id"?: string,"reason": string,"reporter_id"?: string | null,"status"?: Database["public"]['Enums']["report_status"]
+                  }
+                  Update: {
+                    "created_at"?: string,"food_id"?: string,"id"?: string,"reason"?: string,"reporter_id"?: string | null,"status"?: Database["public"]['Enums']["report_status"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "food_reports_food_id_fkey"
+      columns: ["food_id"]
+isOneToOne: false
+      referencedRelation: "food_list_items"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "food_reports_food_id_fkey"
+      columns: ["food_id"]
+isOneToOne: false
+      referencedRelation: "foods"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"foods": {
                   Row: {
                     "aliases": (string)[],"barcode": string | null,"basis": Database["public"]['Enums']["food_basis"],"brand": string | null,"carbs_100": number,"created_at": string,"created_by": string | null,"fat_100": number,"id": string,"kcal_100": number,"name": string,"open_reports": number,"protein_100": number,"search_text": string,"source": Database["public"]['Enums']["food_source"],"updated_at": string,"verified": boolean

@@ -1,7 +1,8 @@
-import { ChevronLeft, SearchX, Star } from 'lucide-react'
+import { ChevronLeft, Flag, Info, SearchX, Star } from 'lucide-react'
 import { useState } from 'react'
 import { useParams } from 'react-router'
 import { nutrientsForGrams } from '@/domain/nutrition'
+import { isUnderReview } from '@/domain/reports'
 import { cx } from '@/lib/cx'
 import { formatGrams, formatKcal } from '@/lib/format'
 import { MEALS } from '@/lib/meals'
@@ -17,7 +18,14 @@ import {
   switchAmount,
   type Amount,
 } from './amount'
-import { useFoodDetail, useIsFavorite, useToggleFavorite, type FoodDetail } from './api'
+import {
+  useFoodDetail,
+  useHasOpenReport,
+  useIsFavorite,
+  useToggleFavorite,
+  type FoodDetail,
+} from './api'
+import { ReportSheet } from './ReportSheet'
 import { useMealParam } from './useMealParam'
 
 const SOURCE_LABELS: Record<FoodDetail['source'], string> = {
@@ -99,6 +107,15 @@ function FoodDetailView({ food }: { food: FoodDetail }) {
           </p>
           <h1 className="text-3xl font-extrabold">{food.name}</h1>
         </div>
+        {isUnderReview(food.openReports) && (
+          <div className="flex gap-3 rounded-card border border-line p-4">
+            <Info aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-ink" />
+            <p className="font-semibold text-ink-soft">
+              <strong className="font-extrabold text-ink">Datos en revisión.</strong> Varias
+              personas reportaron un error en este alimento. Revisa los valores antes de usarlo.
+            </p>
+          </div>
+        )}
       </header>
 
       <Card radius="lg" className="space-y-5">
@@ -183,6 +200,8 @@ function FoodDetailView({ food }: { food: FoodDetail }) {
         </div>
       </section>
 
+      {food.source === 'user' && <ReportSection foodId={food.id} />}
+
       <div className="fixed inset-x-0 bottom-0 bg-gradient-to-t from-bg via-bg to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
         {/* HU-05 CA4. Logging needs food_logs, so the button is enabled in L-3. */}
         <div className="mx-auto max-w-md">
@@ -209,5 +228,37 @@ function FavoriteButton({ foodId }: { foodId: string }) {
       disabled={favorite.data === undefined}
       onClick={() => toggle.mutate(!isFavorite)}
     />
+  )
+}
+
+/** HU-10: community foods can be reported, once per person until it is reviewed. */
+function ReportSection({ foodId }: { foodId: string }) {
+  const [open, setOpen] = useState(false)
+  const reported = useHasOpenReport(foodId, true)
+
+  if (reported.data === undefined) return null
+  return (
+    <section className="space-y-2">
+      <p className="text-sm font-semibold text-ink-soft">
+        Este alimento lo aportó alguien de la comunidad.
+      </p>
+      {reported.data ? (
+        <p className="flex items-center gap-2 font-bold text-ink">
+          <Flag aria-hidden="true" className="size-5 shrink-0" />
+          Reportaste un error en este alimento. Gracias, lo vamos a revisar.
+        </p>
+      ) : (
+        <Button
+          variant="ghost"
+          size="md"
+          className="px-0"
+          icon={<Flag aria-hidden="true" className="size-5" />}
+          onClick={() => setOpen(true)}
+        >
+          Reportar un error
+        </Button>
+      )}
+      <ReportSheet foodId={foodId} open={open} onClose={() => setOpen(false)} />
+    </section>
   )
 }
