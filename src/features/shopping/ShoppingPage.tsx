@@ -289,7 +289,7 @@ function FinishSheet({
       <div className="space-y-4">
         <p className="font-semibold text-ink-soft">
           {pending > 0
-            ? `Quedan ${pending} sin marcar. La lista se guarda en Listas anteriores y puedes crear una nueva.`
+            ? `${pending === 1 ? 'Queda 1' : `Quedan ${pending}`} sin marcar. La lista se guarda en Listas anteriores y puedes crear una nueva.`
             : 'La lista se guarda en Listas anteriores y puedes crear una nueva.'}
         </p>
         {finishList.isError && (

@@ -189,7 +189,7 @@ describe('ShoppingPage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Terminar lista' }))
     const sheet = screen.getByRole('dialog', { name: '¿Terminar esta lista?' })
-    expect(within(sheet).getByText(/Quedan 1 sin marcar/)).toBeInTheDocument()
+    expect(within(sheet).getByText(/Queda 1 sin marcar/)).toBeInTheDocument()
     await userEvent.click(within(sheet).getByRole('button', { name: 'Terminar lista' }))
     expect(callsTo('update')).toContainEqual([{ status: 'archived' }])
   })
