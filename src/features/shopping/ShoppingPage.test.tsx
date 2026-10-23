@@ -23,6 +23,7 @@ function item(overrides: Record<string, unknown> = {}) {
     source: 'manual',
     checked_at: null,
     created_at: '2026-10-23T12:00:00Z',
+    food: null,
     ...overrides,
   }
 }

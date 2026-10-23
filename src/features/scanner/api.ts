@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { isImportable } from '@/domain/validation'
+import { foodDisplayName } from '@/features/foods/serving'
 import { supabase } from '@/lib/supabase'
 import { completeNutrients, fetchOffProduct } from '@/lib/openFoodFacts'
 
 export type BarcodeLookup =
-  | { kind: 'found'; foodId: string }
+  /** `name` is the food's name and brand, as the lists show it. */
+  | { kind: 'found'; foodId: string; name: string }
   /** HU-08 CA4. `hint` is what OFF knew of an incomplete product, to prefill Crear alimento. */
   | { kind: 'missing'; hint: { name: string | null; brand: string | null } | null }
   /** OFF rate-limited us, is down or we are offline: "No pudimos consultar ahora". */
@@ -21,12 +23,12 @@ const REJECTED_CODES = new Set(['22023', '23514', '23502'])
 export async function lookupBarcode(code: string, signal: AbortSignal): Promise<BarcodeLookup> {
   const own = await supabase
     .from('foods')
-    .select('id')
+    .select('id, name, brand')
     .eq('barcode', code)
     .abortSignal(signal)
     .maybeSingle()
   if (own.error) throw own.error
-  if (own.data) return { kind: 'found', foodId: own.data.id }
+  if (own.data) return { kind: 'found', foodId: own.data.id, name: foodDisplayName(own.data) }
 
   const off = await fetchOffProduct(code, signal)
   if (off.status === 'unavailable') return { kind: 'unavailable' }
@@ -50,7 +52,11 @@ export async function lookupBarcode(code: string, signal: AbortSignal): Promise<
   })
   if (error && REJECTED_CODES.has(error.code)) return { kind: 'missing', hint }
   if (error) throw error
-  return { kind: 'found', foodId: z.string().parse(data) }
+  return {
+    kind: 'found',
+    foodId: z.string().parse(data),
+    name: foodDisplayName({ name: product.name, brand: product.brand }),
+  }
 }
 
 /** HU-08 CA2: looks up a scanned code once; `null` waits for one. */

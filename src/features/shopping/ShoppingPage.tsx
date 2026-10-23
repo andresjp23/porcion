@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ChevronLeft, Plus, SearchX, ShoppingCart, Trash2 } from 'lucide-react'
+import { ChevronLeft, Plus, ScanBarcode, SearchX, ShoppingCart, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
+import { Link } from 'react-router'
 import { z } from 'zod'
 import { localDate } from '@/domain/dates'
 import { listProgress, MAX_ITEM_LABEL } from '@/domain/shopping'
@@ -12,7 +13,7 @@ import { cx } from '@/lib/cx'
 import { formatDay } from '@/lib/format'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useGoBack } from '@/lib/useGoBack'
-import { Button, Card, EmptyState, IconButton, Input, Sheet, Toast } from '@/ui'
+import { Button, buttonClasses, Card, EmptyState, IconButton, Input, Sheet, Toast } from '@/ui'
 import { focusRing, pressable } from '@/ui/styles'
 import {
   useActiveList,
@@ -91,6 +92,12 @@ function NoList() {
           >
             Crear lista
           </Button>
+          <Link
+            to="/shopping/scan"
+            className={buttonClasses({ variant: 'secondary', fullWidth: true })}
+          >
+            Escanear sin lista
+          </Link>
           {createList.isError && (
             <p role="alert" className="font-bold text-ink">
               No pudimos crear la lista. Inténtalo de nuevo.
@@ -118,6 +125,11 @@ function ActiveList({ list }: { list: ShoppingList }) {
           {progressText(list)}
         </p>
       </div>
+
+      <Link to="/shopping/scan" className={buttonClasses({ fullWidth: true })}>
+        <ScanBarcode aria-hidden="true" className="size-6" />
+        Modo supermercado
+      </Link>
 
       <AddItemForm listId={list.id} onError={setNotice} />
 

@@ -18,6 +18,7 @@ const query = {
   order: vi.fn(),
   limit: vi.fn(),
   maybeSingle: vi.fn(),
+  single: vi.fn(),
   abortSignal: vi.fn(),
 }
 

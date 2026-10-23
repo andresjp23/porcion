@@ -21,6 +21,7 @@ const item = (checked: boolean) => ({
   source: 'manual',
   checked_at: checked ? '2026-10-23T12:00:00Z' : null,
   created_at: '2026-10-23T11:00:00Z',
+  food: null,
 })
 
 describe('FoodsPage', () => {

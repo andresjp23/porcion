@@ -31,8 +31,15 @@ beforeEach(() => {
 
 describe('lookupBarcode', () => {
   it('finds the food in the own base without asking OFF (R-10)', async () => {
-    queueQueryResult('foods', { data: { id: FOOD_ID }, error: null })
-    expect(await lookupBarcode('5449000000996', signal)).toEqual({ kind: 'found', foodId: FOOD_ID })
+    queueQueryResult('foods', {
+      data: { id: FOOD_ID, name: 'Atún', brand: 'Van Camp' },
+      error: null,
+    })
+    expect(await lookupBarcode('5449000000996', signal)).toEqual({
+      kind: 'found',
+      foodId: FOOD_ID,
+      name: 'Atún · Van Camp',
+    })
     expect(supabase.query.eq).toHaveBeenCalledWith('barcode', '5449000000996')
     expect(fetchOffProduct).not.toHaveBeenCalled()
   })
@@ -40,7 +47,11 @@ describe('lookupBarcode', () => {
   it('imports a complete OFF product and opens it', async () => {
     fetchOffProduct.mockResolvedValue(cocaCola)
     queueRpcResult('import_off_product', { data: FOOD_ID, error: null })
-    expect(await lookupBarcode('5449000000996', signal)).toEqual({ kind: 'found', foodId: FOOD_ID })
+    expect(await lookupBarcode('5449000000996', signal)).toEqual({
+      kind: 'found',
+      foodId: FOOD_ID,
+      name: 'Coca-Cola Original · Coca-Cola',
+    })
     expect(supabase.rpc).toHaveBeenCalledWith('import_off_product', {
       barcode: '5449000000996',
       name: 'Coca-Cola Original',

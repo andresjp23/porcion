@@ -1,17 +1,16 @@
-import { zodResolver } from '@hookform/resolvers/zod'
 import { CameraOff, Keyboard, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { z } from 'zod'
-import { formatBarcode, normalizeBarcode, type Barcode } from '@/domain/barcode'
+import { formatBarcode, type Barcode } from '@/domain/barcode'
 import { isIsoDate } from '@/domain/dates'
 import { cx } from '@/lib/cx'
 import { parseMeal } from '@/lib/meals'
 import { useGoBack } from '@/lib/useGoBack'
-import { Button, buttonClasses, Card, IconButton, Input, Sheet } from '@/ui'
+import { Button, buttonClasses, IconButton, Sheet } from '@/ui'
 import { focusRing } from '@/ui/styles'
 import { useBarcodeLookup, type BarcodeLookup } from './api'
+import { ScanFrame } from './ScanFrame'
+import { TypeCodeSheet } from './TypeCodeSheet'
 import { useBarcodeScanner } from './useBarcodeScanner'
 
 /** The meal and day the scan logs to, passed on to every screen it opens. */
@@ -101,7 +100,7 @@ export function ScanPage() {
         ) : (
           <>
             <div className="flex flex-1 flex-col items-center justify-center gap-6">
-              <ScanFrame />
+              <ScanFrame className="h-44 w-64" />
               {/* Dark backing keeps the text readable over a bright camera image. */}
               <p
                 aria-live="polite"
@@ -148,19 +147,6 @@ export function ScanPage() {
         }}
       />
     </main>
-  )
-}
-
-/** Yellow corners around the area to aim at; decorative. */
-function ScanFrame() {
-  const corner = 'absolute size-12 border-accent'
-  return (
-    <div aria-hidden="true" className="relative h-44 w-64">
-      <span className={cx(corner, 'top-0 left-0 rounded-tl-2xl border-t-4 border-l-4')} />
-      <span className={cx(corner, 'top-0 right-0 rounded-tr-2xl border-t-4 border-r-4')} />
-      <span className={cx(corner, 'bottom-0 left-0 rounded-bl-2xl border-b-4 border-l-4')} />
-      <span className={cx(corner, 'right-0 bottom-0 rounded-br-2xl border-r-4 border-b-4')} />
-    </div>
   )
 }
 
@@ -273,77 +259,6 @@ function ResultSheet({
           </Button>
         </div>
       </div>
-    </Sheet>
-  )
-}
-
-const typedCodeSchema = z.object({
-  code: z
-    .string()
-    .trim()
-    .min(1, 'Escribe los números bajo las barras')
-    .transform((value, ctx) => {
-      const barcode = normalizeBarcode(value)
-      if (!barcode) {
-        ctx.addIssue({
-          code: 'custom',
-          message: /^[\d\s-]+$/.test(value)
-            ? 'Revisa el código: tiene 8, 12 o 13 dígitos, y el último no coincide'
-            : 'Usa solo los números del código',
-        })
-        return z.NEVER
-      }
-      return barcode.code
-    }),
-})
-
-/** HU-08 CA1: the code typed by hand, checked like a scanned one. */
-function TypeCodeSheet({
-  open,
-  onClose,
-  onSubmit,
-}: {
-  open: boolean
-  onClose: () => void
-  onSubmit: (code: string) => void
-}) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<z.input<typeof typedCodeSchema>, unknown, z.output<typeof typedCodeSchema>>({
-    resolver: zodResolver(typedCodeSchema),
-    defaultValues: { code: '' },
-  })
-
-  const close = () => {
-    reset()
-    onClose()
-  }
-  const submit = handleSubmit(({ code }) => {
-    reset()
-    onSubmit(code)
-  })
-
-  return (
-    <Sheet open={open} onClose={close} title="Escribir el código">
-      <form noValidate onSubmit={(event) => void submit(event)} className="space-y-4">
-        <Card radius="lg">
-          <Input
-            label="Código de barras"
-            hint="Son los números bajo las barras, de 8 a 13 dígitos."
-            inputMode="numeric"
-            autoComplete="off"
-            enterKeyHint="search"
-            error={errors.code?.message}
-            {...register('code')}
-          />
-        </Card>
-        <Button type="submit" fullWidth>
-          Buscar producto
-        </Button>
-      </form>
     </Sheet>
   )
 }

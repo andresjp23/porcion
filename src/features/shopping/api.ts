@@ -11,6 +11,8 @@ export type ShoppingItem = {
   source: 'manual' | 'scan'
   checkedAt: string | null
   createdAt: string
+  /** The linked food, for its kcal; null while a scanned code is pending (HU-12 CA4). */
+  food: { name: string; brand: string | null; basis: 'g' | 'ml'; kcal100: number } | null
 }
 
 export type ShoppingList = {
@@ -31,6 +33,14 @@ const itemSchema = z
     source: z.enum(['manual', 'scan']),
     checked_at: z.string().nullable(),
     created_at: z.string(),
+    food: z
+      .object({
+        name: z.string(),
+        brand: z.string().nullable(),
+        basis: z.enum(['g', 'ml']),
+        kcal_100: z.number(),
+      })
+      .nullable(),
   })
   .transform((row): ShoppingItem => ({
     id: row.id,
@@ -41,6 +51,12 @@ const itemSchema = z
     source: row.source,
     checkedAt: row.checked_at,
     createdAt: row.created_at,
+    food: row.food && {
+      name: row.food.name,
+      brand: row.food.brand,
+      basis: row.food.basis,
+      kcal100: row.food.kcal_100,
+    },
   }))
 
 const listSchema = z
@@ -57,8 +73,9 @@ const listSchema = z
     items: row.shopping_list_items.sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
   }))
 
+// Explicit food columns: created_by is not readable (R-11, B-7).
 const LIST_COLUMNS =
-  'id, name, created_at, shopping_list_items (id, label, food_id, barcode, quantity, source, checked_at, created_at)'
+  'id, name, created_at, shopping_list_items (id, label, food_id, barcode, quantity, source, checked_at, created_at, food:foods (name, brand, basis, kcal_100))'
 
 export const shoppingKeys = {
   active: ['shopping', 'active'] as const,
@@ -102,16 +119,54 @@ export function useListHistory() {
 
 const UNIQUE_VIOLATION = '23505'
 
-/** Starts a list. If another tab already made one, that one is the active list. */
+/**
+ * Starts a list and returns its id. If another tab already made one, that one
+ * is the active list and its id comes back instead.
+ */
+export async function createList(name: string) {
+  const created = await supabase.from('shopping_lists').insert({ name }).select('id').single()
+  if (!created.error) return z.string().parse(created.data.id)
+  if (created.error.code !== UNIQUE_VIOLATION) throw created.error
+  const active = await supabase.from('shopping_lists').select('id').eq('status', 'active').single()
+  if (active.error) throw active.error
+  return z.string().parse(active.data.id)
+}
+
 export function useCreateList() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (name: string) => {
-      const { error } = await supabase.from('shopping_lists').insert({ name })
-      if (error && error.code !== UNIQUE_VIOLATION) throw error
-    },
+    mutationFn: createList,
     onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.active }),
   })
+}
+
+const scanResultSchema = z.object({
+  item_id: z.string(),
+  outcome: z.enum(['repeat', 'claimed', 'added']),
+})
+
+export type ScanIntoList = {
+  listId: string
+  barcode: string
+  /** For a new item: the food's name, or the code when the product is unknown. */
+  label: string
+  foodId: string | null
+  /** The item matchScan picked (HU-12 CA2). */
+  claimItemId: string | null
+}
+
+/** HU-12: one scan of the supermarket mode into the list (RPC scan_into_list). */
+export async function scanIntoList(scan: ScanIntoList) {
+  const { data, error } = await supabase.rpc('scan_into_list', {
+    list_id: scan.listId,
+    barcode: scan.barcode,
+    label: scan.label,
+    food_id: scan.foodId ?? undefined,
+    claim_item_id: scan.claimItemId ?? undefined,
+  })
+  if (error) throw error
+  const result = scanResultSchema.parse(data)
+  return { itemId: result.item_id, outcome: result.outcome }
 }
 
 /** Moves the active list to the history (HU-11 CA3). */
@@ -171,6 +226,7 @@ export function useAddItem(listId: string) {
         source: 'manual',
         checkedAt: null,
         createdAt: new Date().toISOString(),
+        food: null,
       }
       return { rollback: await patchItems(queryClient, (items) => [...items, entry]) }
     },

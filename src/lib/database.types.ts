@@ -339,6 +339,9 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"scan_into_list":
+{ Args: { "barcode": string,"claim_item_id"?: string,"food_id"?: string,"label": string,"list_id": string }; Returns: Json
+                           },
 "search_foods":
 { Args: { "lim"?: number,"q": string }; Returns: {
               "basis": Database["public"]['Enums']["food_basis"],"brand": string,"carbs_100": number,"default_portion_grams": number,"default_portion_id": string,"default_portion_name": string,"fat_100": number,"id": string,"kcal_100": number,"name": string,"open_reports": number,"protein_100": number,"source": Database["public"]['Enums']["food_source"],"verified": boolean
