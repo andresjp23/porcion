@@ -3,6 +3,7 @@ import { Barcode, Check, ChevronLeft, CircleAlert, Info, Plus, Trash2 } from 'lu
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { normalizeBarcode } from '@/domain/barcode'
+import { isIsoDate } from '@/domain/dates'
 import { cx } from '@/lib/cx'
 import { parseMeal } from '@/lib/meals'
 import { useGoBack } from '@/lib/useGoBack'
@@ -32,7 +33,12 @@ export function CreateFoodPage() {
   const goBack = useGoBack('/add')
   const [params] = useSearchParams()
   const barcode = normalizeBarcode(params.get('barcode') ?? '')?.code ?? null
+  // Passed on to the Detail of the new food, so it logs where the user came from.
+  const detailParams = new URLSearchParams()
   const meal = parseMeal(params.get('meal'))
+  const date = params.get('date')
+  if (meal) detailParams.set('meal', meal)
+  if (date && isIsoDate(date)) detailParams.set('date', date)
   const createFood = useCreateFood()
 
   const {
@@ -76,7 +82,8 @@ export function CreateFoodPage() {
         barcode,
         portions: values.portions,
       })
-      void navigate(meal ? `/foods/${id}?meal=${meal}` : `/foods/${id}`, { replace: true })
+      const query = detailParams.toString()
+      void navigate(query ? `/foods/${id}?${query}` : `/foods/${id}`, { replace: true })
     } catch {
       // Shown below from createFood.error.
     }

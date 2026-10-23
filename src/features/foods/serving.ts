@@ -18,3 +18,8 @@ export function defaultServing(food: Pick<FoodListItem, 'basis' | 'per100' | 'de
       : `${portion.name} · ${amount}`
   return { label, grams, kcal: nutrientsForGrams(food.per100, grams).kcal }
 }
+
+/** How lists and logs name a food: "Galletas · Costa", or just the name. */
+export function foodDisplayName(food: Pick<FoodListItem, 'name' | 'brand'>) {
+  return food.brand ? `${food.name} · ${food.brand}` : food.name
+}

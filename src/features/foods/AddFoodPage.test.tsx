@@ -2,7 +2,13 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useLocation } from 'react-router'
 import { renderWithAuth, resetSupabaseMock, signedInSession } from '@/test/renderWithAuth'
-import { supabase as mock, queueRpcResult, setRpcDefault } from '@/test/supabaseMock'
+import {
+  supabase as mock,
+  queueQueryResult,
+  queueRpcResult,
+  setRpcDefault,
+  setTableDefault,
+} from '@/test/supabaseMock'
 import { AddFoodPage } from './AddFoodPage'
 
 vi.mock('@/lib/supabase', () => import('@/test/supabaseMock'))
@@ -47,6 +53,13 @@ const searchCalls = () => vi.mocked(mock.rpc).mock.calls.filter(([fn]) => fn ===
 describe('AddFoodPage', () => {
   beforeEach(() => {
     resetSupabaseMock()
+    // Thursday 22 October 2026, noon in Santiago.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-22T15:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('preselects the meal of the "+" that opened it (HU-04 CA1)', async () => {
@@ -59,7 +72,6 @@ describe('AddFoodPage', () => {
   })
 
   it('uses the meal of the hour without one (R-09)', async () => {
-    vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-10-22T16:30:00Z')) // 13:30 in Santiago
     renderPage('/add')
     expect(await screen.findByRole('button', { name: 'Almuerzo' })).toHaveAttribute(
@@ -159,10 +171,10 @@ describe('AddFoodPage', () => {
     renderPage()
 
     await userEvent.click(await screen.findByRole('button', { name: 'Favoritos' }))
-    expect(await screen.findByRole('button', { name: /Palta Hass/ })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /^Palta Hass/ })).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Mis alimentos' }))
-    expect(await screen.findByRole('button', { name: /Queque de la abuela/ })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /^Queque de la abuela/ })).toBeInTheDocument()
   })
 
   it('shows an empty state for a tab without foods', async () => {
@@ -178,6 +190,71 @@ describe('AddFoodPage', () => {
     })
     renderPage()
     await userEvent.type(await screen.findByLabelText('Buscar alimento'), 'galletas')
-    expect(await screen.findByRole('button', { name: /Galletas · Costa/ })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /^Galletas · Costa/ })).toBeInTheDocument()
+  })
+
+  it('logs the default portion with the "+" of a row (HU-04 CA4)', async () => {
+    setRpcDefault('search_foods', { data: [row()], error: null })
+    setTableDefault('food_logs', { data: null, error: null })
+    renderPage('/add?meal=breakfast')
+    await userEvent.type(await screen.findByLabelText('Buscar alimento'), 'huevo')
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar Huevo' }))
+
+    expect(mock.query.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        food_id: 'food-1',
+        log_date: '2026-10-22',
+        meal: 'breakfast',
+        portion_id: 'portion-1',
+        quantity: 1,
+        grams: 50,
+        food_name: 'Huevo',
+        kcal: 74,
+        protein: 6.2,
+      }),
+    )
+    expect(screen.getByRole('status')).toHaveTextContent('Agregaste Huevo a Desayuno')
+  })
+
+  it('logs 100 g of a food without portions, on the day being viewed', async () => {
+    setRpcDefault('search_foods', {
+      data: [
+        row({ default_portion_id: null, default_portion_name: null, default_portion_grams: null }),
+      ],
+      error: null,
+    })
+    renderPage('/add?meal=dinner&date=2026-10-21')
+    await userEvent.type(await screen.findByLabelText('Buscar alimento'), 'huevo')
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar Huevo' }))
+
+    expect(mock.query.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        log_date: '2026-10-21',
+        portion_id: null,
+        quantity: 100,
+        grams: 100,
+      }),
+    )
+  })
+
+  it('carries the day to the Detail', async () => {
+    setRpcDefault('search_foods', { data: [row()], error: null })
+    renderPage('/add?meal=dinner&date=2026-10-21')
+    await userEvent.type(await screen.findByLabelText('Buscar alimento'), 'huevo')
+    await userEvent.click(await screen.findByRole('button', { name: /^Huevo/ }))
+    expect(
+      screen.getByText('Detalle /foods/food-1?meal=dinner&date=2026-10-21'),
+    ).toBeInTheDocument()
+  })
+
+  it('says so when logging fails', async () => {
+    setRpcDefault('search_foods', { data: [row()], error: null })
+    queueQueryResult('food_logs', { data: null, error: new Error('offline') })
+    renderPage()
+    await userEvent.type(await screen.findByLabelText('Buscar alimento'), 'huevo')
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar Huevo' }))
+    expect(
+      await screen.findByText('No pudimos agregar Huevo. Inténtalo de nuevo.'),
+    ).toBeInTheDocument()
   })
 })

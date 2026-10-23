@@ -35,10 +35,13 @@ function given(food: unknown, favorite = false) {
 }
 
 function renderDetail(path = `/foods/${FOOD_ID}?meal=lunch`) {
-  return renderWithAuth([{ path: '/foods/:id', element: <FoodDetailPage /> }], {
-    path,
-    session: signedInSession,
-  })
+  return renderWithAuth(
+    [
+      { path: '/foods/:id', element: <FoodDetailPage /> },
+      { path: '/', element: <p>Hoy</p> },
+    ],
+    { path, session: signedInSession },
+  )
 }
 
 const addButton = () => screen.getByRole('button', { name: /^Agregar a/ })
@@ -46,6 +49,13 @@ const addButton = () => screen.getByRole('button', { name: /^Agregar a/ })
 describe('FoodDetailPage', () => {
   beforeEach(() => {
     resetSupabaseMock()
+    // Thursday 22 October 2026, noon in Santiago.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-22T15:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('shows the default portion with its kcal and macros (HU-05 CA1)', async () => {
@@ -218,5 +228,53 @@ describe('FoodDetailPage', () => {
     renderDetail()
     await screen.findByRole('heading', { name: 'Marraqueta' })
     expect(screen.queryByRole('button', { name: 'Reportar un error' })).not.toBeInTheDocument()
+  })
+
+  it('logs the chosen amount and goes back to Hoy (HU-05 CA4)', async () => {
+    given(marraqueta())
+    const router = renderDetail()
+    await userEvent.click(await screen.findByRole('button', { name: 'Sumar 0,5' }))
+    await userEvent.click(addButton())
+
+    expect(mock.query.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        food_id: FOOD_ID,
+        log_date: '2026-10-22',
+        meal: 'lunch',
+        portion_id: 'whole',
+        quantity: 1.5,
+        grams: 150,
+        food_name: 'Marraqueta',
+        kcal: 408,
+      }),
+    )
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/'))
+  })
+
+  it('logs grams without a portion, to the day being viewed', async () => {
+    given(marraqueta())
+    const router = renderDetail(`/foods/${FOOD_ID}?meal=dinner&date=2026-10-21`)
+    expect(await screen.findByText('Se agrega al Mié 21 oct')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Gramos' }))
+    await userEvent.click(addButton())
+
+    expect(mock.query.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        log_date: '2026-10-21',
+        portion_id: null,
+        quantity: 100,
+        grams: 100,
+      }),
+    )
+    await vi.waitFor(() => expect(router.state.location.search).toBe('?date=2026-10-21'))
+  })
+
+  it('stays and says so when logging fails', async () => {
+    given(marraqueta())
+    queueQueryResult('food_logs', { data: null, error: new Error('offline') })
+    const router = renderDetail()
+    await userEvent.click(await screen.findByRole('button', { name: /^Agregar a/ }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos agregarlo')
+    expect(router.state.location.pathname).toBe(`/foods/${FOOD_ID}`)
   })
 })

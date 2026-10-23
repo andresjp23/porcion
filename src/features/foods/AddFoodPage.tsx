@@ -1,12 +1,14 @@
 import { ChevronLeft, Clock, Search, SearchX, Star, UtensilsCrossed } from 'lucide-react'
-import { useId, type ReactNode } from 'react'
+import { useCallback, useId, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import type { Meal } from '@/domain/meal'
+import { nutrientsForGrams } from '@/domain/nutrition'
+import { useAddLog } from '@/features/today/api'
+import { useLogDate } from '@/features/today/useLogDate'
 import { cx } from '@/lib/cx'
 import { MEALS } from '@/lib/meals'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useGoBack } from '@/lib/useGoBack'
-import { Button, Chip, EmptyState, FoodRow, IconButton, Segmented } from '@/ui'
+import { Button, Chip, EmptyState, FoodRow, IconButton, Segmented, Toast } from '@/ui'
 import { focusRing, pressable } from '@/ui/styles'
 import {
   useFavoriteFoods,
@@ -15,7 +17,7 @@ import {
   useRecentFoods,
   type FoodListItem,
 } from './api'
-import { defaultServing } from './serving'
+import { defaultServing, foodDisplayName } from './serving'
 import { useMealParam } from './useMealParam'
 
 /** HU-04 CA3: "unos 250 ms". */
@@ -28,6 +30,14 @@ const TABS: ReadonlyArray<{ value: Tab; label: string }> = [
   { value: 'favorites', label: 'Favoritos' },
   { value: 'mine', label: 'Mis alimentos' },
 ]
+
+/** What a row of any list can do: open the Detail, or log it in 2 taps. */
+type FoodActions = {
+  open: (food: FoodListItem) => void
+  add: (food: FoodListItem) => void
+  /** Link to Crear alimento, keeping the meal and the day. */
+  createHref: (name?: string) => string
+}
 
 function parseTab(value: string | null): Tab {
   return TABS.find((tab) => tab.value === value)?.value ?? 'recent'
@@ -57,9 +67,42 @@ export function AddFoodPage() {
   }
 
   const goBack = useGoBack()
+  const { date, isToday } = useLogDate()
+  const addLog = useAddLog()
+  const [notice, setNotice] = useState<string | null>(null)
+  const dismissNotice = useCallback(() => setNotice(null), [])
+  const mealLabel = MEALS.find((m) => m.value === meal)?.label ?? ''
 
-  function openFood(food: FoodListItem) {
-    void navigate(`/foods/${food.id}?meal=${meal}`)
+  // The meal and, when it is not today, the day travel with every link.
+  function linkParams(extra: Record<string, string> = {}) {
+    const next = new URLSearchParams({ meal, ...extra })
+    if (!isToday) next.set('date', date)
+    return next.toString()
+  }
+
+  const actions: FoodActions = {
+    open: (food) => void navigate(`/foods/${food.id}?${linkParams()}`),
+    // HU-04 CA4: the default portion, without opening the Detail.
+    add: (food) => {
+      const serving = defaultServing(food)
+      const name = foodDisplayName(food)
+      addLog.mutate(
+        {
+          id: crypto.randomUUID(),
+          date,
+          meal,
+          foodId: food.id,
+          portionId: food.defaultPortion?.id ?? null,
+          quantity: food.defaultPortion ? 1 : serving.grams,
+          grams: serving.grams,
+          foodName: name,
+          nutrients: nutrientsForGrams(food.per100, serving.grams),
+        },
+        { onError: () => setNotice(`No pudimos agregar ${name}. Inténtalo de nuevo.`) },
+      )
+      setNotice(`Agregaste ${name} a ${mealLabel}`)
+    },
+    createHref: (name) => `/foods/new?${linkParams(name ? { name } : {})}`,
   }
 
   const term = query.trim()
@@ -106,13 +149,15 @@ export function AddFoodPage() {
             value={tab}
             onChange={(value) => setParam('tab', value === 'recent' ? '' : value)}
           />
-          {tab === 'recent' && <RecentTab onSelect={openFood} />}
-          {tab === 'favorites' && <FavoritesTab onSelect={openFood} />}
-          {tab === 'mine' && <MyFoodsTab meal={meal} onSelect={openFood} />}
+          {tab === 'recent' && <RecentTab actions={actions} />}
+          {tab === 'favorites' && <FavoritesTab actions={actions} />}
+          {tab === 'mine' && <MyFoodsTab actions={actions} />}
         </>
       ) : (
-        <SearchResults term={term} debouncedTerm={debouncedTerm} meal={meal} onSelect={openFood} />
+        <SearchResults term={term} debouncedTerm={debouncedTerm} actions={actions} />
       )}
+
+      {notice && <Toast message={notice} onDismiss={dismissNotice} />}
     </main>
   )
 }
@@ -148,13 +193,11 @@ function SearchField({ value, onChange }: { value: string; onChange: (value: str
 function SearchResults({
   term,
   debouncedTerm,
-  meal,
-  onSelect,
+  actions,
 }: {
   term: string
   debouncedTerm: string
-  meal: Meal
-  onSelect: (food: FoodListItem) => void
+  actions: FoodActions
 }) {
   const search = useFoodSearch(debouncedTerm)
   // Still typing, or the results on screen belong to an earlier query.
@@ -163,7 +206,7 @@ function SearchResults({
   let content: ReactNode
   let status: string
   if (search.data && !(settled && search.data.length === 0)) {
-    content = <FoodList foods={search.data} onSelect={onSelect} />
+    content = <FoodList foods={search.data} actions={actions} />
     status = settled ? resultsStatus(search.data.length) : 'Buscando…'
   } else if (search.isError) {
     status = 'No pudimos buscar'
@@ -186,7 +229,7 @@ function SearchResults({
         icon={<SearchX aria-hidden="true" />}
         title={`No encontramos “${term}”`}
         description="Revisa cómo lo escribiste, o créalo con los datos de su etiqueta."
-        action={<CreateFoodLink meal={meal} name={term} />}
+        action={<CreateFoodLink href={actions.createHref(term)} />}
       />
     )
   } else {
@@ -204,13 +247,11 @@ function SearchResults({
   )
 }
 
-/** HU-09 from Agregar alimento, keeping the meal and what the user searched for. */
-function CreateFoodLink({ meal, name }: { meal: Meal; name?: string }) {
-  const params = new URLSearchParams({ meal })
-  if (name) params.set('name', name)
+/** HU-09 from Agregar alimento. */
+function CreateFoodLink({ href }: { href: string }) {
   return (
     <Link
-      to={`/foods/new?${params.toString()}`}
+      to={href}
       className={cx(
         'inline-flex h-11 items-center justify-center rounded-pill bg-surface px-5 font-extrabold text-on-surface',
         focusRing,
@@ -226,12 +267,12 @@ function resultsStatus(count: number) {
   return count === 1 ? '1 resultado' : `${count} resultados`
 }
 
-function RecentTab({ onSelect }: { onSelect: (food: FoodListItem) => void }) {
+function RecentTab({ actions }: { actions: FoodActions }) {
   const recent = useRecentFoods(true)
   return (
     <ListState
       query={recent}
-      onSelect={onSelect}
+      actions={actions}
       empty={
         <EmptyState
           icon={<Clock aria-hidden="true" />}
@@ -243,12 +284,12 @@ function RecentTab({ onSelect }: { onSelect: (food: FoodListItem) => void }) {
   )
 }
 
-function FavoritesTab({ onSelect }: { onSelect: (food: FoodListItem) => void }) {
+function FavoritesTab({ actions }: { actions: FoodActions }) {
   const favorites = useFavoriteFoods(true)
   return (
     <ListState
       query={favorites}
-      onSelect={onSelect}
+      actions={actions}
       empty={
         <EmptyState
           icon={<Star aria-hidden="true" />}
@@ -260,18 +301,18 @@ function FavoritesTab({ onSelect }: { onSelect: (food: FoodListItem) => void }) 
   )
 }
 
-function MyFoodsTab({ meal, onSelect }: { meal: Meal; onSelect: (food: FoodListItem) => void }) {
+function MyFoodsTab({ actions }: { actions: FoodActions }) {
   const mine = useMyFoods(true)
   return (
     <ListState
       query={mine}
-      onSelect={onSelect}
+      actions={actions}
       empty={
         <EmptyState
           icon={<UtensilsCrossed aria-hidden="true" />}
           title="Aún no creas alimentos"
           description="Los alimentos que crees aparecerán aquí."
-          action={<CreateFoodLink meal={meal} />}
+          action={<CreateFoodLink href={actions.createHref()} />}
         />
       }
     />
@@ -286,15 +327,15 @@ type ListQuery = {
 
 function ListState({
   query,
-  onSelect,
+  actions,
   empty,
 }: {
   query: ListQuery
-  onSelect: (food: FoodListItem) => void
+  actions: FoodActions
   empty: ReactNode
 }) {
   if (query.data) {
-    return query.data.length === 0 ? empty : <FoodList foods={query.data} onSelect={onSelect} />
+    return query.data.length === 0 ? empty : <FoodList foods={query.data} actions={actions} />
   }
   if (query.isError) {
     return (
@@ -313,25 +354,19 @@ function ListState({
   return <p className="px-1 font-semibold text-ink-muted">Cargando…</p>
 }
 
-function FoodList({
-  foods,
-  onSelect,
-}: {
-  foods: FoodListItem[]
-  onSelect: (food: FoodListItem) => void
-}) {
+function FoodList({ foods, actions }: { foods: FoodListItem[]; actions: FoodActions }) {
   return (
     <ul className="space-y-2">
       {foods.map((food) => {
         const serving = defaultServing(food)
         return (
           <li key={food.id}>
-            {/* The "+" for the 2-tap add (HU-04 CA4) comes with food_logs (L-3). */}
             <FoodRow
-              name={food.brand ? `${food.name} · ${food.brand}` : food.name}
+              name={foodDisplayName(food)}
               portion={serving.label}
               kcal={serving.kcal}
-              onSelect={() => onSelect(food)}
+              onSelect={() => actions.open(food)}
+              onAdd={() => actions.add(food)}
             />
           </li>
         )

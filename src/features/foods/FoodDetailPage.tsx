@@ -1,10 +1,12 @@
-import { ChevronLeft, Flag, Info, SearchX, Star } from 'lucide-react'
+import { ChevronLeft, CircleAlert, Flag, Info, SearchX, Star } from 'lucide-react'
 import { useState } from 'react'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { nutrientsForGrams } from '@/domain/nutrition'
 import { isUnderReview } from '@/domain/reports'
+import { useAddLog } from '@/features/today/api'
+import { useLogDate } from '@/features/today/useLogDate'
 import { cx } from '@/lib/cx'
-import { formatGrams, formatKcal } from '@/lib/format'
+import { formatDay, formatGrams, formatKcal } from '@/lib/format'
 import { MEALS } from '@/lib/meals'
 import { useGoBack } from '@/lib/useGoBack'
 import { Button, Card, Chip, EmptyState, IconButton, Stepper, type Macro } from '@/ui'
@@ -26,6 +28,7 @@ import {
   type FoodDetail,
 } from './api'
 import { ReportSheet } from './ReportSheet'
+import { foodDisplayName } from './serving'
 import { useMealParam } from './useMealParam'
 
 const SOURCE_LABELS: Record<FoodDetail['source'], string> = {
@@ -88,6 +91,30 @@ function FoodDetailView({ food }: { food: FoodDetail }) {
   const grams = amountGrams(food, amount)
   const nutrients = nutrientsForGrams(food.per100, grams)
   const mealLabel = MEALS.find((m) => m.value === meal)?.label ?? ''
+  const navigate = useNavigate()
+  const { date, isToday } = useLogDate()
+  const addLog = useAddLog()
+
+  // HU-05 CA4. Hoy already shows the entry (optimistic), but the Detail waits
+  // for the server so a failure is not lost on another screen.
+  async function add() {
+    try {
+      await addLog.mutateAsync({
+        id: crypto.randomUUID(),
+        date,
+        meal,
+        foodId: food.id,
+        portionId: amount.kind === 'portion' ? amount.portionId : null,
+        quantity: amount.kind === 'portion' ? amount.quantity : amount.grams,
+        grams,
+        foodName: foodDisplayName(food),
+        nutrients,
+      })
+      void navigate(isToday ? '/' : `/?date=${date}`, { replace: true })
+    } catch {
+      // Shown below from addLog.error.
+    }
+  }
 
   return (
     <main className="mx-auto min-h-dvh max-w-md space-y-6 px-4 pt-6 pb-32">
@@ -203,10 +230,22 @@ function FoodDetailView({ food }: { food: FoodDetail }) {
       {food.source === 'user' && <ReportSection foodId={food.id} />}
 
       <div className="fixed inset-x-0 bottom-0 bg-gradient-to-t from-bg via-bg to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        {/* HU-05 CA4. Logging needs food_logs, so the button is enabled in L-3. */}
-        <div className="mx-auto max-w-md">
-          <Button fullWidth disabled>
-            Agregar a {mealLabel} · {formatKcal(nutrients.kcal)} kcal
+        <div className="mx-auto max-w-md space-y-2">
+          {addLog.error && (
+            <p role="alert" className="flex items-center gap-2 font-bold text-ink">
+              <CircleAlert aria-hidden="true" className="size-5 shrink-0" />
+              No pudimos agregarlo. Inténtalo de nuevo.
+            </p>
+          )}
+          {!isToday && (
+            <p className="text-center text-sm font-bold text-ink-muted">
+              Se agrega al {formatDay(date)}
+            </p>
+          )}
+          <Button fullWidth disabled={addLog.isPending || grams <= 0} onClick={() => void add()}>
+            {addLog.isPending
+              ? 'Agregando…'
+              : `Agregar a ${mealLabel} · ${formatKcal(nutrients.kcal)} kcal`}
           </Button>
         </div>
       </div>

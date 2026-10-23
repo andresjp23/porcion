@@ -67,6 +67,16 @@ describe('CreateFoodPage', () => {
     ])
   })
 
+  it('keeps the day when opening the new food', async () => {
+    queueRpcResult('create_food', { data: NEW_ID, error: null })
+    renderPage('/foods/new?meal=dinner&date=2026-10-21')
+    await fillTuna()
+    await save()
+    expect(
+      await screen.findByText(`Detalle /foods/${NEW_ID}?meal=dinner&date=2026-10-21`),
+    ).toBeInTheDocument()
+  })
+
   it('shows the 4/4/9 check while typing (R-07)', async () => {
     renderPage()
     await fillTuna()
