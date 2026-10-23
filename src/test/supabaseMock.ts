@@ -16,6 +16,7 @@ const query = {
   order: vi.fn(),
   limit: vi.fn(),
   maybeSingle: vi.fn(),
+  abortSignal: vi.fn(),
 }
 
 /**
@@ -38,6 +39,16 @@ function builder(table: string) {
     return Promise.resolve(result).then(resolve, reject)
   }
   return chain
+}
+
+/** Queues what the next awaited `supabase.rpc(fn)` calls return, in order. */
+export function queueRpcResult(fn: string, ...results: QueryResult[]) {
+  queueQueryResult(`rpc:${fn}`, ...results)
+}
+
+/** What `supabase.rpc(fn)` returns once its queue is empty. */
+export function setRpcDefault(fn: string, result: QueryResult) {
+  setTableDefault(`rpc:${fn}`, result)
 }
 
 /** Queues what the next awaited `supabase.from(table)` chains return, in order. */
@@ -66,5 +77,7 @@ export const supabase = {
     updateUser: vi.fn(),
   },
   from: vi.fn(builder),
+  // RPC results share the table queues under the key `rpc:<fn>`.
+  rpc: vi.fn((fn: string) => builder(`rpc:${fn}`)),
   query,
 }

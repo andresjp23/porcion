@@ -39,6 +39,12 @@ export type Database = {
       foreignKeyName: "favorites_food_id_fkey"
       columns: ["food_id"]
 isOneToOne: false
+      referencedRelation: "food_list_items"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "favorites_food_id_fkey"
+      columns: ["food_id"]
+isOneToOne: false
       referencedRelation: "foods"
       referencedColumns: ["id"]
     }
@@ -56,6 +62,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "food_portions_food_id_fkey"
+      columns: ["food_id"]
+isOneToOne: false
+      referencedRelation: "food_list_items"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "food_portions_food_id_fkey"
       columns: ["food_id"]
 isOneToOne: false
@@ -108,12 +120,43 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "food_list_items": {
+                  Row: {
+                    "basis": Database["public"]['Enums']["food_basis"] | null,"brand": string | null,"carbs_100": number | null,"default_portion_grams": number | null,"default_portion_id": string | null,"default_portion_name": string | null,"fat_100": number | null,"id": string | null,"kcal_100": number | null,"name": string | null,"open_reports": number | null,"protein_100": number | null,"source": Database["public"]['Enums']["food_source"] | null,"verified": boolean | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                }
           }
           Functions: {
             "can_edit_food":
 { Args: { "target_food_id": string }; Returns: boolean
                            },
+"favorite_foods":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "basis": Database["public"]['Enums']["food_basis"] | null,
+"brand": string | null,
+"carbs_100": number | null,
+"default_portion_grams": number | null,
+"default_portion_id": string | null,
+"default_portion_name": string | null,
+"fat_100": number | null,
+"id": string | null,
+"kcal_100": number | null,
+"name": string | null,
+"open_reports": number | null,
+"protein_100": number | null,
+"source": Database["public"]['Enums']["food_source"] | null,
+"verified": boolean | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "food_list_items"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "food_search_text":
 { Args: { "aliases": (string)[],"brand": string,"name": string }; Returns: string
                            },
@@ -123,6 +166,29 @@ isOneToOne: false
 "is_valid_gtin":
 { Args: { "code": string }; Returns: boolean
                            },
+"my_foods":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "basis": Database["public"]['Enums']["food_basis"] | null,
+"brand": string | null,
+"carbs_100": number | null,
+"default_portion_grams": number | null,
+"default_portion_id": string | null,
+"default_portion_name": string | null,
+"fat_100": number | null,
+"id": string | null,
+"kcal_100": number | null,
+"name": string | null,
+"open_reports": number | null,
+"protein_100": number | null,
+"source": Database["public"]['Enums']["food_source"] | null,
+"verified": boolean | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "food_list_items"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "search_foods":
 { Args: { "lim"?: number,"q": string }; Returns: {
               "basis": Database["public"]['Enums']["food_basis"],"brand": string,"carbs_100": number,"default_portion_grams": number,"default_portion_id": string,"default_portion_name": string,"fat_100": number,"id": string,"kcal_100": number,"name": string,"open_reports": number,"protein_100": number,"source": Database["public"]['Enums']["food_source"],"verified": boolean

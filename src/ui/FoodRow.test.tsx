@@ -23,4 +23,9 @@ describe('FoodRow', () => {
     await userEvent.click(screen.getByRole('button', { name: /Huevo.*70 kcal/ }))
     expect(onSelect).toHaveBeenCalledOnce()
   })
+
+  it('has no add button without onAdd', () => {
+    render(<FoodRow name="Huevo" portion="1 unidad · 50 g" kcal={70} onSelect={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: 'Agregar Huevo' })).not.toBeInTheDocument()
+  })
 })

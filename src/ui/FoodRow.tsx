@@ -10,7 +10,8 @@ type FoodRowProps = {
   portion: string
   kcal: number
   onSelect: () => void
-  onAdd: () => void
+  /** The 2-tap add (HU-04 CA4). Without it the row has no "+" button. */
+  onAdd?: () => void
   className?: string
 }
 
@@ -43,12 +44,14 @@ export function FoodRow({ name, portion, kcal, onSelect, onAdd, className }: Foo
           <span className="text-base font-extrabold text-on-surface">{formatKcal(kcal)}</span> kcal
         </span>
       </button>
-      <IconButton
-        label={`Agregar ${name}`}
-        icon={<Plus aria-hidden="true" />}
-        variant="subtle"
-        onClick={onAdd}
-      />
+      {onAdd && (
+        <IconButton
+          label={`Agregar ${name}`}
+          icon={<Plus aria-hidden="true" />}
+          variant="subtle"
+          onClick={onAdd}
+        />
+      )}
     </div>
   )
 }
