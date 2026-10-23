@@ -308,4 +308,47 @@ describe('TodayPage', () => {
       expect(screen.queryByRole('button', { name: 'Repetir lo de ayer' })).not.toBeInTheDocument()
     })
   })
+
+  describe('the first day (L-6)', () => {
+    function givenNeverLogged(hasLogged: boolean) {
+      setTableDefault('profiles', { data: profile, error: null })
+      // Hoy asks for today, yesterday and whether anything was ever logged.
+      queueQueryResult(
+        'food_logs',
+        { data: [], error: null },
+        { data: [], error: null },
+        { data: hasLogged ? { id: 'log-old' } : null, error: null },
+      )
+      setTableDefault('food_logs', { data: [], error: null })
+    }
+
+    it('welcomes someone who has never logged anything', async () => {
+      givenNeverLogged(false)
+      renderToday()
+      expect(
+        await screen.findByRole('heading', { name: '¡Te damos la bienvenida!' }),
+      ).toBeInTheDocument()
+      expect(screen.getByText(/Créalo con los datos de su etiqueta/)).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Agregar tu primera comida' })).toHaveAttribute(
+        'href',
+        '/add',
+      )
+      expect(screen.getByRole('link', { name: 'Crear un alimento' })).toHaveAttribute(
+        'href',
+        '/foods/new',
+      )
+    })
+
+    it('does not welcome again someone who already logged on another day', async () => {
+      givenNeverLogged(true)
+      renderToday()
+      await screen.findByRole('region', { name: 'Desayuno' })
+      await vi.waitFor(() =>
+        expect(vi.mocked(mock.from).mock.calls.filter(([t]) => t === 'food_logs')).toHaveLength(3),
+      )
+      expect(
+        screen.queryByRole('heading', { name: '¡Te damos la bienvenida!' }),
+      ).not.toBeInTheDocument()
+    })
+  })
 })

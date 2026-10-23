@@ -47,6 +47,7 @@ const logEntrySchema = z
 
 /** design §5: one cache entry per day, shared by Hoy and the optimistic adds. */
 export const dayKey = (date: string) => ['day', date] as const
+const hasLoggedKey = ['logs', 'any'] as const
 
 /** The day's logs in the order they were added. */
 export function useDayLogs(date: string, enabled = true) {
@@ -152,6 +153,7 @@ export function useAddLog() {
     onSettled: (_data, _error, log) => {
       void queryClient.invalidateQueries({ queryKey: dayKey(log.date) })
       void queryClient.invalidateQueries({ queryKey: foodKeys.recent })
+      void queryClient.invalidateQueries({ queryKey: hasLoggedKey })
     },
   })
 }
@@ -225,6 +227,24 @@ export function useCopyMeal(date: string) {
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: dayKey(date) })
       void queryClient.invalidateQueries({ queryKey: foodKeys.recent })
+      void queryClient.invalidateQueries({ queryKey: hasLoggedKey })
+    },
+  })
+}
+
+/** L-6: whether the user has logged anything ever, on any day. */
+export function useHasLogged() {
+  return useQuery({
+    queryKey: hasLoggedKey,
+    queryFn: async ({ signal }) => {
+      const { data, error } = await supabase
+        .from('food_logs')
+        .select('id')
+        .limit(1)
+        .abortSignal(signal)
+        .maybeSingle()
+      if (error) throw error
+      return data !== null
     },
   })
 }

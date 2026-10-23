@@ -23,7 +23,14 @@ import { formatDay, formatGrams, formatKcal } from '@/lib/format'
 import { MEALS } from '@/lib/meals'
 import { BottomNav, Button, Card, EmptyState, IconButton, MacroBar, Ring, Toast } from '@/ui'
 import { focusRing, pressable } from '@/ui/styles'
-import { useAddLog, useCopyMeal, useDayLogs, useDeleteLog, type LogEntry } from './api'
+import {
+  useAddLog,
+  useCopyMeal,
+  useDayLogs,
+  useDeleteLog,
+  useHasLogged,
+  type LogEntry,
+} from './api'
 import { LogSheet } from './LogSheet'
 import { useLogDate } from './useLogDate'
 
@@ -45,6 +52,7 @@ export function TodayPage() {
   // HU-07 CA1: only today offers to repeat yesterday.
   const yesterday = addDays(today, -1)
   const yesterdayLogs = useDayLogs(yesterday, isToday)
+  const hasLogged = useHasLogged()
   const navigate = useNavigate()
   const [selected, setSelected] = useState<LogEntry | null>(null)
   const [notice, setNotice] = useState<{ message: string; undo?: LogEntry } | null>(null)
@@ -126,6 +134,7 @@ export function TodayPage() {
         {logs.data ? (
           <>
             {targets && consumed && <SummaryCard consumed={consumed} targets={targets} />}
+            {isToday && hasLogged.data === false && logs.data.length === 0 && <FirstDayWelcome />}
             <ul className="space-y-2">
               {MEALS.map(({ value, label }) => (
                 <li key={value}>
@@ -444,5 +453,63 @@ function RepeatYesterday({
           : `${foods} · ${formatKcal(kcal)} kcal`}
       </p>
     </div>
+  )
+}
+
+/** L-6: the first day, before anything was ever logged. */
+function FirstDayWelcome() {
+  const steps = [
+    'Toca el + de una comida para agregar lo que comiste.',
+    'Busca el alimento: da igual si escribes con o sin tildes.',
+    '¿No está? Créalo con los datos de su etiqueta y queda para todos.',
+    'Mañana podrás repetir una comida de hoy con un toque.',
+  ]
+  return (
+    <section
+      aria-labelledby="welcome-heading"
+      className="space-y-4 rounded-card-lg border border-line p-5"
+    >
+      <div className="space-y-1">
+        <h2 id="welcome-heading" className="text-xl font-extrabold">
+          ¡Te damos la bienvenida!
+        </h2>
+        <p className="font-semibold text-ink-soft">Así registras tu día:</p>
+      </div>
+      <ol className="space-y-2">
+        {steps.map((step, index) => (
+          <li key={step} className="flex gap-3 font-semibold text-ink-soft">
+            <span
+              aria-hidden="true"
+              className="grid size-7 shrink-0 place-items-center rounded-full bg-surface text-sm font-extrabold text-accent"
+            >
+              {index + 1}
+            </span>
+            {step}
+          </li>
+        ))}
+      </ol>
+      <div className="flex flex-col gap-2">
+        <Link
+          to="/add"
+          className={cx(
+            'inline-flex h-[58px] items-center justify-center rounded-pill bg-accent px-6 text-lg font-extrabold text-on-accent',
+            focusRing,
+            pressable,
+          )}
+        >
+          Agregar tu primera comida
+        </Link>
+        <Link
+          to="/foods/new"
+          className={cx(
+            'inline-flex h-11 items-center justify-center rounded-pill bg-surface px-5 font-extrabold text-on-surface',
+            focusRing,
+            pressable,
+          )}
+        >
+          Crear un alimento
+        </Link>
+      </div>
+    </section>
   )
 }
