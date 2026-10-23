@@ -167,6 +167,52 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"shopping_list_items": {
+                  Row: {
+                    "barcode": string | null,"checked_at": string | null,"created_at": string,"food_id": string | null,"id": string,"label": string,"list_id": string,"quantity": number,"source": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "barcode"?: string | null,"checked_at"?: string | null,"created_at"?: string,"food_id"?: string | null,"id"?: string,"label": string,"list_id": string,"quantity"?: number,"source"?: string
+                  }
+                  Update: {
+                    "barcode"?: string | null,"checked_at"?: string | null,"created_at"?: string,"food_id"?: string | null,"id"?: string,"label"?: string,"list_id"?: string,"quantity"?: number,"source"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shopping_list_items_food_id_fkey"
+      columns: ["food_id"]
+isOneToOne: false
+      referencedRelation: "food_list_items"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "shopping_list_items_food_id_fkey"
+      columns: ["food_id"]
+isOneToOne: false
+      referencedRelation: "foods"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "shopping_list_items_list_id_fkey"
+      columns: ["list_id"]
+isOneToOne: false
+      referencedRelation: "shopping_lists"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"shopping_lists": {
+                  Row: {
+                    "created_at": string,"id": string,"name": string,"status": Database["public"]['Enums']["list_status"],"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"name"?: string,"status"?: Database["public"]['Enums']["list_status"],"user_id"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"name"?: string,"status"?: Database["public"]['Enums']["list_status"],"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"weight_entries": {
                   Row: {
                     "created_at": string,"date": string,"user_id": string,"weight_kg": number

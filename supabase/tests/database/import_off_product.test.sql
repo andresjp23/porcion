@@ -12,7 +12,7 @@ grant all on imported to authenticated;
 
 insert into imported
 select public.import_off_product(
-  barcode => '5449000000996',
+  barcode => '7809990000013',
   name => ' Coca-Cola Original ',
   brand => 'Coca-Cola',
   basis => 'ml',
@@ -42,7 +42,7 @@ select ok(
 );
 
 select is(
-  public.import_off_product(barcode => '5449000000996', name => 'Otra', basis => 'g',
+  public.import_off_product(barcode => '7809990000013', name => 'Otra', basis => 'g',
     kcal_100 => 0, protein_100 => 0, carbs_100 => 0, fat_100 => 0),
   (select id from imported),
   'a barcode already in the base returns that food instead of a copy'
