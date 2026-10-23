@@ -1,20 +1,18 @@
 import { ChevronLeft, Clock, Search, SearchX, Star, UtensilsCrossed } from 'lucide-react'
 import { useId, type ReactNode } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router'
-import { mealAt } from '@/domain/meal'
-import { useAuth } from '@/features/auth/useAuth'
-import { useProfile } from '@/features/profile/useProfile'
+import { useNavigate, useSearchParams } from 'react-router'
 import { cx } from '@/lib/cx'
-import { MEALS, parseMeal } from '@/lib/meals'
+import { MEALS } from '@/lib/meals'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
+import { useGoBack } from '@/lib/useGoBack'
 import { Button, Chip, EmptyState, FoodRow, IconButton, Segmented } from '@/ui'
 import { focusRing } from '@/ui/styles'
 import { useFavoriteFoods, useFoodSearch, useMyFoods, type FoodListItem } from './api'
 import { defaultServing } from './serving'
+import { useMealParam } from './useMealParam'
 
 /** HU-04 CA3: "unos 250 ms". */
 const SEARCH_DEBOUNCE_MS = 250
-const DEFAULT_TIME_ZONE = 'America/Santiago'
 
 type Tab = 'recent' | 'favorites' | 'mine'
 
@@ -34,18 +32,12 @@ function parseTab(value: string | null): Tab {
  */
 export function AddFoodPage() {
   const navigate = useNavigate()
-  const location = useLocation()
   const [params, setParams] = useSearchParams()
-  const auth = useAuth()
-  const profile = useProfile(auth.status === 'signedIn' ? auth.session.user.id : undefined)
-
-  // CA1: the meal comes from the "+" that opened the screen, else from the hour (R-09).
-  const meal =
-    parseMeal(params.get('meal')) ?? mealAt(new Date(), profile.data?.timezone ?? DEFAULT_TIME_ZONE)
+  const [meal, setMeal] = useMealParam()
   const query = params.get('q') ?? ''
   const tab = parseTab(params.get('tab'))
 
-  function setParam(name: 'meal' | 'q' | 'tab', value: string) {
+  function setParam(name: 'q' | 'tab', value: string) {
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev)
@@ -57,11 +49,7 @@ export function AddFoodPage() {
     )
   }
 
-  function goBack() {
-    // Opened from a link outside the app there is no history to go back to.
-    if (location.key === 'default') void navigate('/')
-    else void navigate(-1)
-  }
+  const goBack = useGoBack()
 
   function openFood(food: FoodListItem) {
     void navigate(`/foods/${food.id}?meal=${meal}`)
@@ -93,7 +81,7 @@ export function AddFoodPage() {
           <Chip
             key={option.value}
             selected={option.value === meal}
-            onClick={() => setParam('meal', option.value)}
+            onClick={() => setMeal(option.value)}
           >
             {option.label}
           </Chip>

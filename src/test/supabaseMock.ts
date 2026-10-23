@@ -10,8 +10,10 @@ const defaults = new Map<string, QueryResult>()
 /** Spies shared by every query, to assert how a chain was built. */
 const query = {
   select: vi.fn(),
+  insert: vi.fn(),
   update: vi.fn(),
   upsert: vi.fn(),
+  delete: vi.fn(),
   eq: vi.fn(),
   order: vi.fn(),
   limit: vi.fn(),
