@@ -2,6 +2,7 @@ import {
   gramsForPortion,
   nutrientsForGrams,
   nutrientsForPortion,
+  nutrientsPer100ForRecipe,
   type Nutrients,
 } from './nutrition'
 
@@ -54,5 +55,36 @@ describe('nutrientsForPortion', () => {
     expect(result.protein).toBeCloseTo(17.2)
     expect(result.carbs).toBeCloseTo(110.8)
     expect(result.fat).toBeCloseTo(2.4)
+  })
+})
+
+describe('nutrientsPer100ForRecipe', () => {
+  const flour: Nutrients = { kcal: 366, protein: 10.9, carbs: 77.3, fat: 1.5 }
+  const water: Nutrients = { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+
+  it('divides the ingredients by the cooked weight', () => {
+    // 200 g of flour and 100 g of water that bake down to 250 g.
+    const result = nutrientsPer100ForRecipe(
+      [
+        { per100: flour, grams: 200 },
+        { per100: water, grams: 100 },
+      ],
+      250,
+    )
+    expect(result.kcal).toBeCloseTo((366 * 2 * 100) / 250)
+    expect(result.protein).toBeCloseTo((10.9 * 2 * 100) / 250)
+    expect(result.carbs).toBeCloseTo((77.3 * 2 * 100) / 250)
+    expect(result.fat).toBeCloseTo((1.5 * 2 * 100) / 250)
+  })
+
+  it('equals the ingredient itself when nothing is lost', () => {
+    const result = nutrientsPer100ForRecipe([{ per100: flour, grams: 300 }], 300)
+    for (const field of ['kcal', 'protein', 'carbs', 'fat'] as const) {
+      expect(result[field]).toBeCloseTo(flour[field])
+    }
+  })
+
+  it('rejects a cooked weight that is not positive', () => {
+    expect(() => nutrientsPer100ForRecipe([{ per100: flour, grams: 100 }], 0)).toThrow(RangeError)
   })
 })

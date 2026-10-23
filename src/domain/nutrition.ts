@@ -43,3 +43,37 @@ export function nutrientsForGrams(per100: Nutrients, grams: number): Nutrients {
 export function nutrientsForPortion(per100: Nutrients, portion: Portion, quantity: number) {
   return nutrientsForGrams(per100, gramsForPortion(portion, quantity))
 }
+
+/** An ingredient of a recipe: its nutrients per 100 g and the grams used. */
+export type RecipeIngredient = {
+  per100: Nutrients
+  grams: number
+}
+
+/**
+ * Nutrients per 100 g of a cooked recipe: the sum of its ingredients divided
+ * by the weight after cooking, so water lost in the oven concentrates them.
+ */
+export function nutrientsPer100ForRecipe(
+  ingredients: RecipeIngredient[],
+  cookedGrams: number,
+): Nutrients {
+  if (!Number.isFinite(cookedGrams) || cookedGrams <= 0) {
+    throw new RangeError(`cookedGrams must be a finite number > 0, got ${cookedGrams}`)
+  }
+  const total: Nutrients = { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+  for (const { per100, grams } of ingredients) {
+    const n = nutrientsForGrams(per100, grams)
+    total.kcal += n.kcal
+    total.protein += n.protein
+    total.carbs += n.carbs
+    total.fat += n.fat
+  }
+  const factor = 100 / cookedGrams
+  return {
+    kcal: total.kcal * factor,
+    protein: total.protein * factor,
+    carbs: total.carbs * factor,
+    fat: total.fat * factor,
+  }
+}

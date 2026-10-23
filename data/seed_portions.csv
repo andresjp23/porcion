@@ -1,0 +1,100 @@
+food_key,name,grams,is_default,fuente
+pan-molde-blanco,1 rebanada,27.3,true,fdc:325871
+pan-molde-integral,1 rebanada,32.1,true,fdc:335240
+marraqueta,1 marraqueta,100,true,estimado
+marraqueta,1/2 marraqueta,50,false,estimado
+hallulla,1 hallulla,90,true,estimado
+arroz-blanco-cocido,1 taza,158,true,fdc:168878
+fideos-cocidos,1 taza,124,true,fdc:169737
+avena,1 taza,81,false,fdc:173904
+avena,1/3 de taza,27,true,fdc:173904
+quinoa-cocida,1 taza,185,true,fdc:168917
+harina-trigo,1 taza,125,true,fdc:168894
+papa-cocida,1 papa mediana,167,true,fdc:170440
+papa-cocida,1 papa grande,300,false,fdc:170440
+papa-cocida,1/2 taza,78,false,fdc:170440
+papas-fritas,1 porción chica,71,false,fdc:170698
+papas-fritas,1 porción mediana,117,true,fdc:170698
+papas-fritas,1 porción grande,154,false,fdc:170698
+choclo,1 choclo mediano,103,true,fdc:169999
+choclo,1 taza de granos,149,false,fdc:169999
+porotos-cocidos,1 taza,177,true,fdc:173736
+lentejas-cocidas,1 taza,198,true,fdc:172421
+lentejas-cocidas,1 cucharada,12.3,false,fdc:172421
+garbanzos-cocidos,1 taza,164,true,fdc:173757
+leche-entera,1 vaso (200 ml),200,true,medida
+leche-entera,1 taza,229,false,fdc:322892
+leche-entera,1 cucharada,15,false,fdc:322892
+leche-descremada,1 vaso (200 ml),200,true,medida
+leche-descremada,1 taza,229,false,fdc:322559
+yogur-natural,1 pote (170 g),170,true,fdc:171284
+yogur-natural,1 taza,245,false,fdc:171284
+queso-gauda,1 lámina,28.35,true,fdc:171241
+quesillo,1 taza desmenuzado,122,true,fdc:172223
+huevo,1 huevo,50.3,true,fdc:748967
+huevo-duro,1 huevo,50,true,fdc:173424
+pechuga-pollo-cocida,1/2 pechuga,86,true,fdc:171477
+pechuga-pollo-cocida,1 taza picada,140,false,fdc:171477
+trutro-pollo-cocido,1 trutro corto sin piel,116,true,fdc:172388
+carne-molida-cocida,1 porción (85 g),85,true,fdc:174031
+posta-cocida,1 porción (85 g),85,true,fdc:170635
+lomo-cerdo-cocido,1 porción (85 g),85,true,fdc:168250
+jamon-cerdo,1 lámina,13.5,true,fdc:332397
+pechuga-pavo,1 porción (85 g),85,true,medida
+vienesa,1 vienesa,52,true,fdc:172968
+atun-agua,1 lata escurrida,107,true,fdc:334194
+salmon-cocido,1 porción (85 g),85,false,fdc:175168
+salmon-cocido,1/2 filete,178,true,fdc:175168
+palta,1 palta sin cáscara ni cuesco,136,false,fdc:171706
+palta,1 cucharada,15,true,estimado
+platano,1 plátano sin cáscara,115,true,fdc:790991
+manzana,1 manzana mediana,182,true,fdc:171688
+manzana,1 manzana chica,149,false,fdc:171688
+naranja,1 naranja,140,true,fdc:746771
+mandarina,1 mandarina mediana,88,true,fdc:169105
+pera,1 pera mediana,178,true,fdc:746773
+uva,10 uvas,49,false,fdc:174683
+uva,1 taza,151,true,fdc:174683
+frutilla,1 taza,144,true,fdc:167762
+frutilla,1 frutilla grande,18,false,fdc:167762
+durazno,1 durazno mediano,161,true,fdc:325430
+kiwi,1 kiwi,69,true,fdc:168153
+sandia,1 tajada,286,true,fdc:167765
+sandia,1 taza en cubos,152,false,fdc:167765
+melon,1 taza en cubos,160,true,fdc:327198
+chirimoya,1 chirimoya sin cáscara ni pepas,235,false,fdc:173953
+chirimoya,1 taza,160,true,fdc:173953
+tomate,1 tomate mediano,123,true,fdc:170457
+tomate,1 rodaja,20,false,fdc:170457
+lechuga,1 taza picada,57,true,fdc:169248
+lechuga,1 hoja grande,15,false,fdc:169248
+zanahoria,1 zanahoria mediana,61,true,fdc:170393
+zanahoria,1 taza rallada,110,false,fdc:170393
+cebolla,1 cebolla,143,true,fdc:790646
+pepino,1/2 taza en rodajas,52,true,fdc:168409
+pepino,1 pepino,301,false,fdc:168409
+zapallo-italiano,1 zapallo italiano mediano,196,true,fdc:169291
+zapallo-italiano,1 taza picado,124,false,fdc:169291
+zapallo,1 taza en cubos,140,true,fdc:169295
+brocoli,1 taza picado,76,true,fdc:321900
+porotos-verdes,1 taza,100,true,fdc:169961
+aceite-vegetal,1 cucharada,14,true,fdc:172336
+aceite-vegetal,1 cucharadita,4.5,false,fdc:172336
+aceite-oliva,1 cucharada,13.5,true,fdc:171413
+aceite-oliva,1 cucharadita,4.5,false,fdc:171413
+mantequilla,1 cucharadita,5,true,fdc:173410
+mantequilla,1 cucharada,14.2,false,fdc:173410
+mayonesa,1 cucharada,13.8,true,fdc:171009
+mayonesa,1 sobre,10,false,fdc:171009
+azucar,1 cucharadita,4,true,fdc:334247
+manjar,1 cucharada,19,true,fdc:173461
+mermelada,1 cucharada,20,true,fdc:169641
+nueces,1 puñado (28 g),28.35,true,fdc:170187
+nueces,1 taza en mitades,100,false,fdc:170187
+mani,1 puñado (28 g),28.35,true,fdc:173806
+mani,1 taza,146,false,fdc:173806
+jugo-naranja,1 vaso (200 ml),200,true,medida
+jugo-naranja,1 taza,248,false,fdc:169098
+bebida-cola,1 vaso (200 ml),200,true,medida
+bebida-cola,1 lata (350 ml),350,false,medida
+cafe,1 taza,237,true,fdc:171890

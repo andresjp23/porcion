@@ -1,0 +1,38 @@
+{
+  "key": "hallulla",
+  "description": "Hallulla tradicional: harina, agua, manteca, sal y levadura fresca, horneada.",
+  "notes": "Receta estándar de panadería. El peso final supone una pérdida de 12 % de agua en el horneado; está por verificar pesando la masa antes y después de hornear.",
+  "ingredients": [
+    {
+      "name": "Harina de trigo",
+      "grams": 1000,
+      "fuente": "fdc:789890",
+      "per100": { "kcal": 366, "protein": 10.9, "carbs": 77.3, "fat": 1.48 }
+    },
+    {
+      "name": "Agua",
+      "grams": 500,
+      "fuente": "sin aporte",
+      "per100": { "kcal": 0, "protein": 0, "carbs": 0, "fat": 0 }
+    },
+    {
+      "name": "Manteca",
+      "grams": 100,
+      "fuente": "fdc:171401",
+      "per100": { "kcal": 902, "protein": 0, "carbs": 0, "fat": 100 }
+    },
+    {
+      "name": "Sal",
+      "grams": 20,
+      "fuente": "sin aporte",
+      "per100": { "kcal": 0, "protein": 0, "carbs": 0, "fat": 0 }
+    },
+    {
+      "name": "Levadura fresca",
+      "grams": 20,
+      "fuente": "fdc:175042",
+      "per100": { "kcal": 105, "protein": 8.4, "carbs": 10, "fat": 1.9 }
+    }
+  ],
+  "cookedGrams": 1443
+}

@@ -47,6 +47,7 @@ npm run pwa:assets    # regenera los íconos PWA desde public/logo.svg
 supabase start        # Supabase local (requiere Docker). Copia la URL y la anon key a .env.local
 npm run db:reset      # aplica migraciones + seed desde cero
 npm run db:types      # regenera src/lib/database.types.ts
+npm run seed:build    # valida data/ y genera supabase/seed.sql
 npm run test:db       # tests pgTAP de supabase/tests (RLS, triggers)
 ```
 
@@ -72,7 +73,9 @@ src/
 supabase/
   migrations/     # SQL versionado, una migración por cambio
   tests/database/ # tests pgTAP
-  seed.sql        # alimentos base
+  seed.sql        # alimentos base, generado por scripts/build-seed.ts
+data/             # fuentes del seed: CSV y recetas (ver data/README.md)
+scripts/          # herramientas de desarrollo (build-seed)
 docs/
 ```
 

@@ -42,7 +42,8 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub": "66666666-6666-6666-6666-666666666666"}', true);
 
 select is(
-  (select count(*)::int from public.foods),
+  (select count(*)::int from public.foods
+   where id in ('a0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002')),
   2,
   'every signed-in user reads the shared base'
 );
