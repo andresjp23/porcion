@@ -257,4 +257,22 @@ describe('AddFoodPage', () => {
       await screen.findByText('No pudimos agregar Huevo. Inténtalo de nuevo.'),
     ).toBeInTheDocument()
   })
+
+  it('always offers Crear alimento, also when the lists have foods', async () => {
+    setRpcDefault('my_foods', { data: [row({ name: 'Queque de la abuela' })], error: null })
+    setRpcDefault('search_foods', { data: [row()], error: null })
+    renderPage('/add?meal=lunch&tab=mine')
+    await screen.findByRole('button', { name: /^Queque de la abuela/ })
+    expect(screen.getByRole('link', { name: 'Crear alimento' })).toHaveAttribute(
+      'href',
+      '/foods/new?meal=lunch',
+    )
+
+    await userEvent.type(screen.getByLabelText('Buscar alimento'), 'huevo')
+    await screen.findByRole('button', { name: /^Huevo/ })
+    expect(screen.getByRole('link', { name: 'Crear alimento' })).toHaveAttribute(
+      'href',
+      '/foods/new?meal=lunch&name=huevo',
+    )
+  })
 })

@@ -1,4 +1,4 @@
-import { ChevronLeft, Clock, Search, SearchX, Star, UtensilsCrossed } from 'lucide-react'
+import { ChevronLeft, Clock, Plus, Search, SearchX, Star, UtensilsCrossed } from 'lucide-react'
 import { useCallback, useId, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { nutrientsForGrams } from '@/domain/nutrition'
@@ -111,7 +111,7 @@ export function AddFoodPage() {
   const debouncedTerm = useDebouncedValue(term, SEARCH_DEBOUNCE_MS)
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md space-y-4 px-4 py-6">
+    <main className="mx-auto min-h-dvh max-w-md space-y-4 px-4 pt-6 pb-32">
       <header className="flex items-center gap-3">
         <IconButton
           label="Volver"
@@ -158,6 +158,15 @@ export function AddFoodPage() {
       )}
 
       {notice && <Toast message={notice} onDismiss={dismissNotice} />}
+
+      {/* Always in sight: a food missing from the base is created from here (HU-09).
+          S-3 adds "Escanear código de barras" next to it. */}
+      <div className="fixed inset-x-0 bottom-0 bg-gradient-to-t from-bg via-bg to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto flex max-w-md items-center justify-between gap-3 rounded-card border border-surface-2 bg-surface py-2 pr-2 pl-4 text-on-surface">
+          <p className="text-sm font-bold text-on-surface-muted">¿No encuentras lo que comiste?</p>
+          <CreateFoodLink href={actions.createHref(term)} />
+        </div>
+      </div>
     </main>
   )
 }
@@ -228,8 +237,7 @@ function SearchResults({
       <EmptyState
         icon={<SearchX aria-hidden="true" />}
         title={`No encontramos “${term}”`}
-        description="Revisa cómo lo escribiste, o créalo con los datos de su etiqueta."
-        action={<CreateFoodLink href={actions.createHref(term)} />}
+        description="Revisa cómo lo escribiste, o créalo abajo con los datos de su etiqueta."
       />
     )
   } else {
@@ -253,11 +261,12 @@ function CreateFoodLink({ href }: { href: string }) {
     <Link
       to={href}
       className={cx(
-        'inline-flex h-11 items-center justify-center rounded-pill bg-surface px-5 font-extrabold text-on-surface',
+        'inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-pill bg-accent px-4 font-extrabold text-on-accent',
         focusRing,
         pressable,
       )}
     >
+      <Plus aria-hidden="true" className="size-5" />
       Crear alimento
     </Link>
   )
@@ -312,7 +321,6 @@ function MyFoodsTab({ actions }: { actions: FoodActions }) {
           icon={<UtensilsCrossed aria-hidden="true" />}
           title="Aún no creas alimentos"
           description="Los alimentos que crees aparecerán aquí."
-          action={<CreateFoodLink href={actions.createHref()} />}
         />
       }
     />
