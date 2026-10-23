@@ -119,6 +119,10 @@ describe('AddFoodPage', () => {
     renderPage()
     await userEvent.type(await screen.findByLabelText('Buscar alimento'), 'xyz')
     expect(await screen.findByText('No encontramos “xyz”')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Crear alimento' })).toHaveAttribute(
+      'href',
+      '/foods/new?meal=lunch&name=xyz',
+    )
   })
 
   it('offers to retry when the search fails', async () => {

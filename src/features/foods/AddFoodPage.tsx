@@ -1,12 +1,13 @@
 import { ChevronLeft, Clock, Search, SearchX, Star, UtensilsCrossed } from 'lucide-react'
 import { useId, type ReactNode } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
+import type { Meal } from '@/domain/meal'
 import { cx } from '@/lib/cx'
 import { MEALS } from '@/lib/meals'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useGoBack } from '@/lib/useGoBack'
 import { Button, Chip, EmptyState, FoodRow, IconButton, Segmented } from '@/ui'
-import { focusRing } from '@/ui/styles'
+import { focusRing, pressable } from '@/ui/styles'
 import { useFavoriteFoods, useFoodSearch, useMyFoods, type FoodListItem } from './api'
 import { defaultServing } from './serving'
 import { useMealParam } from './useMealParam'
@@ -101,10 +102,10 @@ export function AddFoodPage() {
           />
           {tab === 'recent' && <RecentTab />}
           {tab === 'favorites' && <FavoritesTab onSelect={openFood} />}
-          {tab === 'mine' && <MyFoodsTab onSelect={openFood} />}
+          {tab === 'mine' && <MyFoodsTab meal={meal} onSelect={openFood} />}
         </>
       ) : (
-        <SearchResults term={term} debouncedTerm={debouncedTerm} onSelect={openFood} />
+        <SearchResults term={term} debouncedTerm={debouncedTerm} meal={meal} onSelect={openFood} />
       )}
     </main>
   )
@@ -141,10 +142,12 @@ function SearchField({ value, onChange }: { value: string; onChange: (value: str
 function SearchResults({
   term,
   debouncedTerm,
+  meal,
   onSelect,
 }: {
   term: string
   debouncedTerm: string
+  meal: Meal
   onSelect: (food: FoodListItem) => void
 }) {
   const search = useFoodSearch(debouncedTerm)
@@ -176,7 +179,8 @@ function SearchResults({
       <EmptyState
         icon={<SearchX aria-hidden="true" />}
         title={`No encontramos “${term}”`}
-        description="Revisa cómo lo escribiste o prueba con otro nombre."
+        description="Revisa cómo lo escribiste, o créalo con los datos de su etiqueta."
+        action={<CreateFoodLink meal={meal} name={term} />}
       />
     )
   } else {
@@ -191,6 +195,24 @@ function SearchResults({
       </p>
       {content}
     </section>
+  )
+}
+
+/** HU-09 from Agregar alimento, keeping the meal and what the user searched for. */
+function CreateFoodLink({ meal, name }: { meal: Meal; name?: string }) {
+  const params = new URLSearchParams({ meal })
+  if (name) params.set('name', name)
+  return (
+    <Link
+      to={`/foods/new?${params.toString()}`}
+      className={cx(
+        'inline-flex h-11 items-center justify-center rounded-pill bg-surface px-5 font-extrabold text-on-surface',
+        focusRing,
+        pressable,
+      )}
+    >
+      Crear alimento
+    </Link>
   )
 }
 
@@ -226,7 +248,7 @@ function FavoritesTab({ onSelect }: { onSelect: (food: FoodListItem) => void }) 
   )
 }
 
-function MyFoodsTab({ onSelect }: { onSelect: (food: FoodListItem) => void }) {
+function MyFoodsTab({ meal, onSelect }: { meal: Meal; onSelect: (food: FoodListItem) => void }) {
   const mine = useMyFoods(true)
   return (
     <ListState
@@ -237,6 +259,7 @@ function MyFoodsTab({ onSelect }: { onSelect: (food: FoodListItem) => void }) {
           icon={<UtensilsCrossed aria-hidden="true" />}
           title="Aún no creas alimentos"
           description="Los alimentos que crees aparecerán aquí."
+          action={<CreateFoodLink meal={meal} />}
         />
       }
     />

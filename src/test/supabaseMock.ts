@@ -80,6 +80,8 @@ export const supabase = {
   },
   from: vi.fn(builder),
   // RPC results share the table queues under the key `rpc:<fn>`.
-  rpc: vi.fn((fn: string) => builder(`rpc:${fn}`)),
+  rpc: vi.fn<(fn: string, args?: unknown) => ReturnType<typeof builder>>((fn) =>
+    builder(`rpc:${fn}`),
+  ),
   query,
 }

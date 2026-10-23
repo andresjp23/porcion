@@ -5,6 +5,7 @@ import { LoginPage } from '@/features/auth/LoginPage'
 import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
 import { SignupPage } from '@/features/auth/SignupPage'
 import { AddFoodPage } from '@/features/foods/AddFoodPage'
+import { CreateFoodPage } from '@/features/foods/CreateFoodPage'
 import { FoodDetailPage } from '@/features/foods/FoodDetailPage'
 import { OnboardingPage } from '@/features/onboarding/OnboardingPage'
 import { TodayPage } from '@/features/today/TodayPage'
@@ -38,6 +39,7 @@ export const routes: RouteObject[] = [
     children: [
       { path: '/', element: <TodayPage /> },
       { path: '/add', element: <AddFoodPage /> },
+      { path: '/foods/new', element: <CreateFoodPage /> },
       { path: '/foods/:id', element: <FoodDetailPage /> },
     ],
   },

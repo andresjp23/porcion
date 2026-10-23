@@ -134,6 +134,9 @@ isOneToOne: false
             "can_edit_food":
 { Args: { "target_food_id": string }; Returns: boolean
                            },
+"create_food":
+{ Args: { "barcode"?: string,"basis": Database["public"]['Enums']["food_basis"],"brand"?: string,"carbs_100": number,"fat_100": number,"kcal_100": number,"name": string,"portions"?: Json,"protein_100": number }; Returns: string
+                           },
 "favorite_foods":
 { Args: Record<PropertyKey, never>; Returns: {
               "basis": Database["public"]['Enums']["food_basis"] | null,

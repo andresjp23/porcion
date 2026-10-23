@@ -224,3 +224,59 @@ export function useToggleFavorite(foodId: string) {
     },
   })
 }
+
+export type NewFood = {
+  name: string
+  brand: string
+  basis: 'g' | 'ml'
+  per100: Nutrients
+  /** Canonical barcode (src/domain/barcode.ts), when it comes from the scanner. */
+  barcode: string | null
+  /** The first one is the default portion. */
+  portions: { name: string; grams: number }[]
+}
+
+/** HU-09 CA5: the barcode is already taken by this food. */
+export class BarcodeTakenError extends Error {
+  readonly foodId: string | null
+
+  constructor(foodId: string | null) {
+    super('barcode taken')
+    this.foodId = foodId
+  }
+}
+
+const UNIQUE_VIOLATION = '23505'
+
+/** HU-09: creates a community food with its portions and returns its id. */
+export function useCreateFood() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (food: NewFood) => {
+      const { data, error } = await supabase.rpc('create_food', {
+        name: food.name,
+        brand: food.brand,
+        basis: food.basis,
+        kcal_100: food.per100.kcal,
+        protein_100: food.per100.protein,
+        carbs_100: food.per100.carbs,
+        fat_100: food.per100.fat,
+        barcode: food.barcode ?? undefined,
+        portions: food.portions,
+      })
+      if (error?.code === UNIQUE_VIOLATION && food.barcode) {
+        const existing = await supabase
+          .from('foods')
+          .select('id')
+          .eq('barcode', food.barcode)
+          .maybeSingle()
+        throw new BarcodeTakenError(existing.data?.id ?? null)
+      }
+      if (error) throw error
+      return z.string().parse(data)
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: foodKeys.mine })
+    },
+  })
+}
