@@ -1,10 +1,17 @@
-import { formatDay, formatFactor, formatGrams, formatKcal } from './format'
+import { formatDay, formatFactor, formatGrams, formatKcal, formatKg } from './format'
 
 describe('formatKcal', () => {
   it('rounds to an integer and groups thousands with a dot', () => {
     expect(formatKcal(1187.4)).toBe('1.187')
     expect(formatKcal(244.5)).toBe('245')
     expect(formatKcal(0)).toBe('0')
+  })
+})
+
+describe('formatKg', () => {
+  it('always shows one decimal with a decimal comma', () => {
+    expect(formatKg(78)).toBe('78,0')
+    expect(formatKg(78.44)).toBe('78,4')
   })
 })
 

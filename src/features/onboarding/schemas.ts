@@ -35,6 +35,9 @@ export const bodySchema = z.object({
   weightKg: decimal(30, 300, 'Ingresa un peso entre 30 y 300 kg'),
 })
 
+/** HU-13: the weight of the day, on its own (Progreso). */
+export const weightSchema = bodySchema.pick({ weightKg: true })
+
 export const activitySchema = z.object({
   activity: z.enum(['sedentary', 'light', 'moderate', 'high', 'very_high'], CHOOSE_ONE),
 })

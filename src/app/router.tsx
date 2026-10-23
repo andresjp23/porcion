@@ -10,6 +10,7 @@ import { EditFoodPage } from '@/features/foods/EditFoodPage'
 import { FoodDetailPage } from '@/features/foods/FoodDetailPage'
 import { FoodsPage } from '@/features/foods/FoodsPage'
 import { OnboardingPage } from '@/features/onboarding/OnboardingPage'
+import { ProgressPage } from '@/features/progress/ProgressPage'
 import { ScanPage } from '@/features/scanner/ScanPage'
 import { ShoppingPage } from '@/features/shopping/ShoppingPage'
 import { SupermarketPage } from '@/features/shopping/SupermarketPage'
@@ -45,6 +46,7 @@ export const routes: RouteObject[] = [
     children: [
       { path: '/', element: <TodayPage /> },
       { path: '/add', element: <AddFoodPage /> },
+      { path: '/progress', element: <ProgressPage /> },
       { path: '/foods', element: <FoodsPage /> },
       { path: '/foods/new', element: <CreateFoodPage /> },
       { path: '/foods/:id', element: <FoodDetailPage /> },
