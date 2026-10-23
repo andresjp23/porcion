@@ -75,3 +75,13 @@ export function normalizeBarcode(raw: string, format?: BarcodeFormat): Barcode |
       return null
   }
 }
+
+/**
+ * A canonical code split for reading it back: "780 1234 567890" for 13
+ * digits, "9638 5074" for 8. Anything else is returned as is.
+ */
+export function formatBarcode(code: string) {
+  if (code.length === 13) return `${code.slice(0, 3)} ${code.slice(3, 7)} ${code.slice(7)}`
+  if (code.length === 8) return `${code.slice(0, 4)} ${code.slice(4)}`
+  return code
+}

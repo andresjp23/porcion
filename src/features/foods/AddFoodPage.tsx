@@ -1,4 +1,13 @@
-import { ChevronLeft, Clock, Plus, Search, SearchX, Star, UtensilsCrossed } from 'lucide-react'
+import {
+  ChevronLeft,
+  Clock,
+  Plus,
+  ScanBarcode,
+  Search,
+  SearchX,
+  Star,
+  UtensilsCrossed,
+} from 'lucide-react'
 import { useCallback, useId, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { nutrientsForGrams } from '@/domain/nutrition'
@@ -8,7 +17,16 @@ import { cx } from '@/lib/cx'
 import { MEALS } from '@/lib/meals'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useGoBack } from '@/lib/useGoBack'
-import { Button, Chip, EmptyState, FoodRow, IconButton, Segmented, Toast } from '@/ui'
+import {
+  Button,
+  buttonClasses,
+  Chip,
+  EmptyState,
+  FoodRow,
+  IconButton,
+  Segmented,
+  Toast,
+} from '@/ui'
 import { focusRing, pressable } from '@/ui/styles'
 import {
   useFavoriteFoods,
@@ -37,6 +55,8 @@ type FoodActions = {
   add: (food: FoodListItem) => void
   /** Link to Crear alimento, keeping the meal and the day. */
   createHref: (name?: string) => string
+  /** Link to the scanner (HU-08), keeping the meal and the day. */
+  scanHref: string
 }
 
 function parseTab(value: string | null): Tab {
@@ -103,6 +123,7 @@ export function AddFoodPage() {
       setNotice(`Agregaste ${name} a ${mealLabel}`)
     },
     createHref: (name) => `/foods/new?${linkParams(name ? { name } : {})}`,
+    scanHref: `/scan?${linkParams()}`,
   }
 
   const term = query.trim()
@@ -111,7 +132,7 @@ export function AddFoodPage() {
   const debouncedTerm = useDebouncedValue(term, SEARCH_DEBOUNCE_MS)
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md space-y-4 px-4 pt-6 pb-32">
+    <main className="mx-auto min-h-dvh max-w-md space-y-4 px-4 pt-6 pb-48">
       <header className="flex items-center gap-3">
         <IconButton
           label="Volver"
@@ -138,7 +159,11 @@ export function AddFoodPage() {
         ))}
       </div>
 
-      <SearchField value={query} onChange={(value) => setParam('q', value)} />
+      <SearchField
+        value={query}
+        onChange={(value) => setParam('q', value)}
+        scanHref={actions.scanHref}
+      />
 
       {term === '' ? (
         <>
@@ -159,19 +184,35 @@ export function AddFoodPage() {
 
       {notice && <Toast message={notice} onDismiss={dismissNotice} />}
 
-      {/* Always in sight: a food missing from the base is created from here (HU-09).
-          S-3 adds "Escanear código de barras" next to it. */}
+      {/* Always in sight: scanning (HU-08) and, for a food missing from the
+          base, creating it (HU-09). */}
       <div className="fixed inset-x-0 bottom-0 bg-gradient-to-t from-bg via-bg to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto flex max-w-md items-center justify-between gap-3 rounded-card border border-surface-2 bg-surface py-2 pr-2 pl-4 text-on-surface">
-          <p className="text-sm font-bold text-on-surface-muted">¿No encuentras lo que comiste?</p>
-          <CreateFoodLink href={actions.createHref(term)} />
+        <div className="mx-auto max-w-md space-y-2">
+          <div className="flex items-center justify-between gap-3 rounded-card border border-surface-2 bg-surface py-2 pr-2 pl-4 text-on-surface">
+            <p className="text-sm font-bold text-on-surface-muted">
+              ¿No encuentras lo que comiste?
+            </p>
+            <CreateFoodLink href={actions.createHref(term)} />
+          </div>
+          <Link to={actions.scanHref} className={buttonClasses({ fullWidth: true })}>
+            <ScanBarcode aria-hidden="true" className="size-6" />
+            Escanear código de barras
+          </Link>
         </div>
       </div>
     </main>
   )
 }
 
-function SearchField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+function SearchField({
+  value,
+  onChange,
+  scanHref,
+}: {
+  value: string
+  onChange: (value: string) => void
+  scanHref: string
+}) {
   const id = useId()
   return (
     <div className="relative">
@@ -191,10 +232,21 @@ function SearchField({ value, onChange }: { value: string; onChange: (value: str
         autoComplete="off"
         enterKeyHint="search"
         className={cx(
-          'h-14 w-full rounded-pill border border-surface-2 bg-surface pr-5 pl-14 text-base font-bold text-on-surface placeholder:text-on-surface-muted',
+          'h-14 w-full rounded-pill border border-surface-2 bg-surface pr-16 pl-14 text-base font-bold text-on-surface placeholder:text-on-surface-muted',
           focusRing,
         )}
       />
+      <Link
+        to={scanHref}
+        aria-label="Escanear código de barras"
+        className={cx(
+          'absolute top-1/2 right-1.5 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface-2 text-accent',
+          focusRing,
+          pressable,
+        )}
+      >
+        <ScanBarcode aria-hidden="true" className="size-6" />
+      </Link>
     </div>
   )
 }

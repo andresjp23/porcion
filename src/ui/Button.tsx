@@ -1,20 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { cx } from '@/lib/cx'
-import { focusRing, pressable } from './styles'
-
-type ButtonVariant = 'primary' | 'secondary' | 'ghost'
-type ButtonSize = 'lg' | 'md'
-
-const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-accent text-on-accent shadow-lg shadow-ink/10',
-  secondary: 'bg-surface text-on-surface',
-  ghost: 'text-ink underline underline-offset-4',
-}
-
-const sizeClasses: Record<ButtonSize, string> = {
-  lg: 'h-[58px] px-6 text-lg',
-  md: 'h-11 px-5 text-base',
-}
+import { buttonClasses, type ButtonSize, type ButtonVariant } from './buttonStyles'
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant
@@ -36,15 +22,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={cx(
-        'inline-flex min-w-11 items-center justify-center gap-3 rounded-pill font-extrabold',
-        variantClasses[variant],
-        sizeClasses[size],
-        fullWidth && 'w-full',
-        focusRing,
-        pressable,
-        className,
-      )}
+      className={cx(buttonClasses({ variant, size, fullWidth }), className)}
       {...props}
     >
       {icon}

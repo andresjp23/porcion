@@ -1,4 +1,4 @@
-import { expandUpcE, gtinCheckDigit, normalizeBarcode } from './barcode'
+import { expandUpcE, formatBarcode, gtinCheckDigit, normalizeBarcode } from './barcode'
 
 describe('gtinCheckDigit', () => {
   it('computes the GS1 check digit', () => {
@@ -68,5 +68,13 @@ describe('normalizeBarcode', () => {
   it('validates against the format the scanner reports', () => {
     expect(normalizeBarcode('4006381333931', 'ean_8')).toBeNull()
     expect(normalizeBarcode('96385074', 'ean_8')?.format).toBe('ean_8')
+  })
+})
+
+describe('formatBarcode', () => {
+  it('groups the digits like the scanner screen shows them', () => {
+    expect(formatBarcode('7801234567890')).toBe('780 1234 567890')
+    expect(formatBarcode('96385074')).toBe('9638 5074')
+    expect(formatBarcode('123')).toBe('123')
   })
 })

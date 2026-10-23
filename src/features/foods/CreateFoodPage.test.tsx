@@ -147,6 +147,12 @@ describe('CreateFoodPage', () => {
     expect(createCalls()[0]?.[1]).toMatchObject({ barcode: '0036000291452' })
   })
 
+  it('prefills the brand of an incomplete Open Food Facts product', () => {
+    renderPage('/foods/new?barcode=7801234567894&name=Leche%20entera&brand=Soprole')
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Leche entera')
+    expect(screen.getByLabelText('Marca')).toHaveValue('Soprole')
+  })
+
   it('ignores a barcode with a wrong check digit', () => {
     renderPage('/foods/new?barcode=7801234567890')
     expect(screen.queryByText(/^Código/)).not.toBeInTheDocument()

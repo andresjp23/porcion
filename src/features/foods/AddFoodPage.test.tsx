@@ -275,4 +275,13 @@ describe('AddFoodPage', () => {
       '/foods/new?meal=lunch&name=huevo',
     )
   })
+
+  it('opens the scanner from the search field and the bottom button (HU-08)', () => {
+    renderPage('/add?meal=dinner&date=2026-10-20')
+    const links = screen.getAllByRole('link', { name: 'Escanear código de barras' })
+    expect(links).toHaveLength(2)
+    for (const link of links) {
+      expect(link).toHaveAttribute('href', '/scan?meal=dinner&date=2026-10-20')
+    }
+  })
 })

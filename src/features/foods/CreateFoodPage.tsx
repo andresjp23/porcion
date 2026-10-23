@@ -9,8 +9,9 @@ import { BarcodeTakenError, useCreateFood } from './api'
 import { FoodForm } from './FoodForm'
 
 /**
- * Nuevo alimento (HU-09). `?barcode=` comes from the scanner (S-3) and
- * `?name=` from a search that found nothing.
+ * Nuevo alimento (HU-09). `?barcode=` comes from the scanner, with `?name=`
+ * and `?brand=` when Open Food Facts had an incomplete product; `?name=` alone
+ * comes from a search that found nothing.
  */
 export function CreateFoodPage() {
   const navigate = useNavigate()
@@ -31,7 +32,7 @@ export function CreateFoodPage() {
       barcode={barcode}
       defaultValues={{
         name: params.get('name')?.trim() ?? '',
-        brand: '',
+        brand: params.get('brand')?.trim() ?? '',
         basis: 'g',
         kcal: '',
         protein: '',
