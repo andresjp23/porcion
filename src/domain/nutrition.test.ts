@@ -3,6 +3,7 @@ import {
   nutrientsForGrams,
   nutrientsForPortion,
   nutrientsPer100ForRecipe,
+  per100FromLogged,
   sumNutrients,
   type Nutrients,
 } from './nutrition'
@@ -102,5 +103,19 @@ describe('sumNutrients', () => {
 
   it('is zero for nothing', () => {
     expect(sumNutrients([])).toEqual({ kcal: 0, protein: 0, carbs: 0, fat: 0 })
+  })
+})
+
+describe('per100FromLogged', () => {
+  it('undoes nutrientsForGrams', () => {
+    const logged = nutrientsForGrams(bread, 150)
+    const per100 = per100FromLogged(logged, 150)
+    for (const field of ['kcal', 'protein', 'carbs', 'fat'] as const) {
+      expect(per100[field]).toBeCloseTo(bread[field])
+    }
+  })
+
+  it('rejects zero grams', () => {
+    expect(() => per100FromLogged(bread, 0)).toThrow(RangeError)
   })
 })

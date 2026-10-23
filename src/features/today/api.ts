@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import type { Meal } from '@/domain/meal'
 import type { Nutrients } from '@/domain/nutrition'
@@ -70,7 +70,8 @@ export function useDayLogs(date: string) {
 export type NewLog = {
   date: string
   meal: Meal
-  foodId: string
+  /** Null only when Deshacer restores a log whose food was deleted since. */
+  foodId: string | null
   /** Null when logging plain grams. */
   portionId: string | null
   /** Number of portions, or grams when there is no portion. */
@@ -82,6 +83,26 @@ export type NewLog = {
 }
 
 /**
+ * Applies a change to a day's cached logs right away and returns how to undo
+ * it. A day never loaded is fetched when Hoy opens, so there is nothing to patch.
+ */
+async function patchDay(
+  queryClient: QueryClient,
+  date: string,
+  change: (entries: LogEntry[]) => LogEntry[],
+) {
+  const key = dayKey(date)
+  await queryClient.cancelQueries({ queryKey: key })
+  const previous = queryClient.getQueryData<LogEntry[]>(key)
+  if (previous) queryClient.setQueryData<LogEntry[]>(key, change(previous))
+  return () => {
+    if (previous) queryClient.setQueryData(key, previous)
+  }
+}
+
+type Rollback = { rollback: () => void }
+
+/**
  * Logs a food (L-3). The entry shows up in Hoy before the server answers and
  * goes away again if saving fails. The id is made here, so the optimistic
  * entry already has its final id (HU-06 can delete it right away).
@@ -89,8 +110,9 @@ export type NewLog = {
 export function useAddLog() {
   const queryClient = useQueryClient()
   return useMutation({
-    // Callers pass `id: crypto.randomUUID()`.
-    mutationFn: async (log: NewLog & { id: string }) => {
+    // Callers pass `id: crypto.randomUUID()`. `createdAt` is only set when
+    // Deshacer puts a deleted log back in its place (HU-06 CA2).
+    mutationFn: async (log: NewLog & { id: string; createdAt?: string }) => {
       const { error } = await supabase.from('food_logs').insert({
         id: log.id,
         food_id: log.foodId,
@@ -104,13 +126,11 @@ export function useAddLog() {
         protein: log.nutrients.protein,
         carbs: log.nutrients.carbs,
         fat: log.nutrients.fat,
+        ...(log.createdAt ? { created_at: log.createdAt } : {}),
       })
       if (error) throw error
     },
-    onMutate: async (log) => {
-      const key = dayKey(log.date)
-      await queryClient.cancelQueries({ queryKey: key })
-      const previous = queryClient.getQueryData<LogEntry[]>(key)
+    onMutate: async (log): Promise<Rollback> => {
       const entry: LogEntry = {
         id: log.id,
         foodId: log.foodId,
@@ -120,17 +140,69 @@ export function useAddLog() {
         grams: log.grams,
         foodName: log.foodName,
         nutrients: log.nutrients,
-        createdAt: new Date().toISOString(),
+        createdAt: log.createdAt ?? new Date().toISOString(),
       }
-      // A day never loaded is fetched when Hoy opens; nothing to patch then.
-      if (previous) queryClient.setQueryData<LogEntry[]>(key, [...previous, entry])
-      return { previous }
+      const rollback = await patchDay(queryClient, log.date, (entries) =>
+        [...entries, entry].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+      )
+      return { rollback }
     },
-    onError: (_error, log, context) => {
-      if (context?.previous) queryClient.setQueryData(dayKey(log.date), context.previous)
-    },
+    onError: (_error, _log, context) => context?.rollback(),
     onSettled: (_data, _error, log) => {
       void queryClient.invalidateQueries({ queryKey: dayKey(log.date) })
+      void queryClient.invalidateQueries({ queryKey: foodKeys.recent })
+    },
+  })
+}
+
+export type LogChanges = Pick<LogEntry, 'meal' | 'portionId' | 'quantity' | 'grams' | 'nutrients'>
+
+/** HU-06 CA1: changes the amount or the meal of a log. */
+export function useUpdateLog(date: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, changes }: { id: string; changes: LogChanges }) => {
+      const { error } = await supabase
+        .from('food_logs')
+        .update({
+          meal: changes.meal,
+          portion_id: changes.portionId,
+          quantity: changes.quantity,
+          grams: changes.grams,
+          kcal: changes.nutrients.kcal,
+          protein: changes.nutrients.protein,
+          carbs: changes.nutrients.carbs,
+          fat: changes.nutrients.fat,
+        })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onMutate: async ({ id, changes }): Promise<Rollback> => ({
+      rollback: await patchDay(queryClient, date, (entries) =>
+        entries.map((entry) => (entry.id === id ? { ...entry, ...changes } : entry)),
+      ),
+    }),
+    onError: (_error, _variables, context) => context?.rollback(),
+    onSettled: () => void queryClient.invalidateQueries({ queryKey: dayKey(date) }),
+  })
+}
+
+/** HU-06: deletes a log. Deshacer puts it back with useAddLog. */
+export function useDeleteLog(date: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (entry: LogEntry) => {
+      const { error } = await supabase.from('food_logs').delete().eq('id', entry.id)
+      if (error) throw error
+    },
+    onMutate: async (entry): Promise<Rollback> => ({
+      rollback: await patchDay(queryClient, date, (entries) =>
+        entries.filter((e) => e.id !== entry.id),
+      ),
+    }),
+    onError: (_error, _entry, context) => context?.rollback(),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: dayKey(date) })
       void queryClient.invalidateQueries({ queryKey: foodKeys.recent })
     },
   })

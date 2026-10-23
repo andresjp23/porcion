@@ -84,3 +84,20 @@ export function sumNutrients(items: Nutrients[]): Nutrients {
   }
   return total
 }
+
+/**
+ * Per-100 g values behind a logged amount: the inverse of nutrientsForGrams.
+ * Editing a log rescales its own snapshot (R-02), not the food's current values.
+ */
+export function per100FromLogged(logged: Nutrients, grams: number): Nutrients {
+  if (!Number.isFinite(grams) || grams <= 0) {
+    throw new RangeError(`grams must be a finite number > 0, got ${grams}`)
+  }
+  const factor = 100 / grams
+  return {
+    kcal: logged.kcal * factor,
+    protein: logged.protein * factor,
+    carbs: logged.carbs * factor,
+    fat: logged.fat * factor,
+  }
+}

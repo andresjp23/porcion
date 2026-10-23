@@ -89,13 +89,11 @@ describe('TodayPage', () => {
     ])
     renderToday()
 
-    const breakfast = (await screen.findByRole('heading', { name: 'Desayuno' })).closest(
-      'div',
-    )!.parentElement!
+    const breakfast = await screen.findByRole('region', { name: 'Desayuno' })
     expect(within(breakfast).getByText('Marraqueta, Huevo')).toBeInTheDocument()
     expect(within(breakfast).getByText('420')).toBeInTheDocument()
 
-    const lunch = screen.getByRole('heading', { name: 'Almuerzo' }).closest('div')!.parentElement!
+    const lunch = screen.getByRole('region', { name: 'Almuerzo' })
     expect(within(lunch).getByText('Aún sin registros')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Agregar a Almuerzo' })).toHaveAttribute(
       'href',
@@ -156,5 +154,113 @@ describe('TodayPage', () => {
     setTableDefault('food_logs', { data: null, error: new Error('offline') })
     renderToday()
     expect(await screen.findByText('No pudimos cargar tu día')).toBeInTheDocument()
+  })
+
+  describe('editing a log (HU-06)', () => {
+    const BREAD_ID = '551897d8-7b1e-5943-a2d6-a00e6b49df1b'
+    const breadLog = {
+      ...log('breakfast', 'Marraqueta', 272, [10.75, 49.68, 2.42]),
+      id: 'log-bread',
+      food_id: BREAD_ID,
+      portion_id: 'whole',
+      quantity: 1,
+      grams: 100,
+    }
+    const bread = {
+      id: BREAD_ID,
+      name: 'Marraqueta',
+      brand: null,
+      basis: 'g',
+      kcal_100: 272,
+      protein_100: 10.75,
+      carbs_100: 49.68,
+      fat_100: 2.42,
+      source: 'seed',
+      verified: true,
+      open_reports: 0,
+      barcode: null,
+      food_portions: [
+        { id: 'whole', name: '1 marraqueta', grams: 100, is_default: true },
+        { id: 'half', name: '1/2 marraqueta', grams: 50, is_default: false },
+      ],
+    }
+
+    async function openBread() {
+      given([breadLog])
+      setTableDefault('foods', { data: bread, error: null })
+      renderToday()
+      const breakfast = await screen.findByRole('region', { name: 'Desayuno' })
+      await userEvent.click(within(breakfast).getByRole('button', { expanded: false }))
+      await userEvent.click(
+        within(breakfast).getByRole('button', { name: /^Marraqueta.*272 kcal$/ }),
+      )
+      return screen.findByRole('dialog', { name: 'Marraqueta' })
+    }
+
+    it('opens a sheet with the amount and the meal (CA1)', async () => {
+      const sheet = await openBread()
+      expect(await within(sheet).findByText(/1 marraqueta · 100 g/)).toBeInTheDocument()
+      expect(within(sheet).getByRole('button', { name: 'Desayuno' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+    })
+
+    it('saves a new amount and meal from the log’s own snapshot (R-02)', async () => {
+      const sheet = await openBread()
+      await userEvent.click(
+        await within(sheet).findByRole('button', { name: '1/2 marraqueta (50 g)' }),
+      )
+      await userEvent.click(within(sheet).getByRole('button', { name: 'Sumar 0,5' }))
+      await userEvent.click(within(sheet).getByRole('button', { name: 'Colación' }))
+      await userEvent.click(within(sheet).getByRole('button', { name: 'Guardar' }))
+
+      expect(mock.query.update).toHaveBeenCalledWith({
+        meal: 'snack',
+        portion_id: 'half',
+        quantity: 1.5,
+        grams: 75,
+        kcal: 204,
+        protein: 8.0625,
+        carbs: 37.26,
+        fat: 1.815,
+      })
+      expect(mock.query.eq).toHaveBeenCalledWith('id', 'log-bread')
+      await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    })
+
+    it('deletes, and Deshacer puts the log back as it was (CA2)', async () => {
+      const sheet = await openBread()
+      await userEvent.click(await within(sheet).findByRole('button', { name: 'Eliminar' }))
+
+      expect(mock.query.delete).toHaveBeenCalled()
+      expect(mock.query.eq).toHaveBeenCalledWith('id', 'log-bread')
+      const toast = screen.getByRole('status')
+      expect(toast).toHaveTextContent('Eliminaste Marraqueta')
+
+      await userEvent.click(within(toast).getByRole('button', { name: 'Deshacer' }))
+      expect(mock.query.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'log-bread',
+          created_at: breadLog.created_at,
+          food_id: BREAD_ID,
+          portion_id: 'whole',
+          quantity: 1,
+          kcal: 272,
+        }),
+      )
+      expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    })
+
+    it('edits in grams a log whose food no longer exists', async () => {
+      given([{ ...breadLog, food_id: null, portion_id: null, quantity: 100 }])
+      renderToday()
+      const breakfast = await screen.findByRole('region', { name: 'Desayuno' })
+      await userEvent.click(within(breakfast).getByRole('button', { expanded: false }))
+      await userEvent.click(within(breakfast).getByRole('button', { name: /^Marraqueta/ }))
+      const sheet = await screen.findByRole('dialog', { name: 'Marraqueta' })
+      expect(within(sheet).getByLabelText('Gramos')).toHaveValue('100')
+      expect(within(sheet).queryByRole('group', { name: 'Porción' })).not.toBeInTheDocument()
+    })
   })
 })

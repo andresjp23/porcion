@@ -9,6 +9,7 @@ import {
   SearchX,
   type LucideIcon,
 } from 'lucide-react'
+import { useCallback, useId, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { addDays } from '@/domain/dates'
 import { dayBalance } from '@/domain/day'
@@ -17,11 +18,12 @@ import { sumNutrients, type Nutrients } from '@/domain/nutrition'
 import { useAuth } from '@/features/auth/useAuth'
 import { useProfile } from '@/features/profile/useProfile'
 import { cx } from '@/lib/cx'
-import { formatDay, formatKcal } from '@/lib/format'
+import { formatDay, formatGrams, formatKcal } from '@/lib/format'
 import { MEALS } from '@/lib/meals'
-import { BottomNav, Button, Card, EmptyState, IconButton, MacroBar, Ring } from '@/ui'
+import { BottomNav, Button, Card, EmptyState, IconButton, MacroBar, Ring, Toast } from '@/ui'
 import { focusRing, pressable } from '@/ui/styles'
-import { useDayLogs, type LogEntry } from './api'
+import { useAddLog, useDayLogs, useDeleteLog, type LogEntry } from './api'
+import { LogSheet } from './LogSheet'
 import { useLogDate } from './useLogDate'
 
 const MEAL_ICONS: Record<Meal, LucideIcon> = {
@@ -40,6 +42,39 @@ export function TodayPage() {
   const profile = useProfile(auth.status === 'signedIn' ? auth.session.user.id : undefined)
   const logs = useDayLogs(date)
   const navigate = useNavigate()
+  const [selected, setSelected] = useState<LogEntry | null>(null)
+  const [notice, setNotice] = useState<{ message: string; undo?: LogEntry } | null>(null)
+  const dismissNotice = useCallback(() => setNotice(null), [])
+  const deleteLog = useDeleteLog(date)
+  const addLog = useAddLog()
+
+  function remove(entry: LogEntry) {
+    setSelected(null)
+    deleteLog.mutate(entry, {
+      onError: () => setNotice({ message: `No pudimos eliminar ${entry.foodName}.` }),
+    })
+    setNotice({ message: `Eliminaste ${entry.foodName}`, undo: entry })
+  }
+
+  // HU-06 CA2: back in its place, with the same id and time.
+  function undo(entry: LogEntry) {
+    setNotice(null)
+    addLog.mutate(
+      {
+        id: entry.id,
+        createdAt: entry.createdAt,
+        date,
+        meal: entry.meal,
+        foodId: entry.foodId,
+        portionId: entry.portionId,
+        quantity: entry.quantity,
+        grams: entry.grams,
+        foodName: entry.foodName,
+        nutrients: entry.nutrients,
+      },
+      { onError: () => setNotice({ message: `No pudimos recuperar ${entry.foodName}.` }) },
+    )
+  }
 
   const p = profile.data
   // Onboarding (HU-02) always leaves a target; the fallback only covers a profile being edited.
@@ -96,6 +131,7 @@ export function TodayPage() {
                     date={date}
                     isToday={isToday}
                     entries={logs.data.filter((entry) => entry.meal === value)}
+                    onSelectEntry={setSelected}
                   />
                 </li>
               ))}
@@ -114,6 +150,33 @@ export function TodayPage() {
           />
         ) : (
           <p className="px-1 font-semibold text-ink-muted">Cargando tu día…</p>
+        )}
+        <LogSheet
+          entry={selected}
+          date={date}
+          onClose={() => setSelected(null)}
+          onDelete={remove}
+        />
+        {notice && (
+          <Toast
+            message={notice.message}
+            onDismiss={dismissNotice}
+            durationMs={5000}
+            action={
+              notice.undo && (
+                <button
+                  type="button"
+                  onClick={() => notice.undo && undo(notice.undo)}
+                  className={cx(
+                    'min-h-11 shrink-0 rounded-pill px-3 font-extrabold text-accent',
+                    focusRing,
+                  )}
+                >
+                  Deshacer
+                </button>
+              )
+            }
+          />
         )}
       </main>
       <BottomNav />
@@ -219,53 +282,112 @@ function MealCard({
   date,
   isToday,
   entries,
+  onSelectEntry,
 }: {
   meal: Meal
   label: string
   date: string
   isToday: boolean
   entries: LogEntry[]
+  onSelectEntry: (entry: LogEntry) => void
 }) {
+  const [expanded, setExpanded] = useState(false)
+  const listId = useId()
   const Icon = MEAL_ICONS[meal]
   const kcal = sumNutrients(entries.map((entry) => entry.nutrients)).kcal
   // Each food once, in the order it was logged.
   const summary = [...new Set(entries.map((entry) => entry.foodName))].join(', ')
   const addParams = new URLSearchParams({ meal })
   if (!isToday) addParams.set('date', date)
+  const open = expanded && entries.length > 0
 
-  return (
-    <div className="flex items-center gap-3 rounded-card border border-surface-2 bg-surface p-3 text-on-surface">
+  const header = (
+    <>
       <span
         aria-hidden="true"
         className="grid size-12 shrink-0 place-items-center rounded-icon bg-surface-2"
       >
         <Icon className="size-6" />
       </span>
-      <div className="min-w-0 flex-1">
-        <h2 className="text-base font-extrabold">{label}</h2>
-        <p className="truncate text-sm font-semibold text-on-surface-muted">
+      <span className="min-w-0 flex-1">
+        <span className="block text-base font-extrabold">{label}</span>
+        <span className="block truncate text-sm font-semibold text-on-surface-muted">
           {summary || 'Aún sin registros'}
-        </p>
-      </div>
+        </span>
+      </span>
       {entries.length > 0 && (
-        <p className="shrink-0 text-lg font-extrabold tabular-nums">
+        <span className="shrink-0 text-lg font-extrabold tabular-nums">
           {formatKcal(kcal)}
           <span className="sr-only"> kcal</span>
-        </p>
+        </span>
       )}
-      <Link
-        to={`/add?${addParams.toString()}`}
-        aria-label={`Agregar a ${label}`}
-        className={cx(
-          'grid size-12 shrink-0 place-items-center rounded-full',
-          // An empty meal is the next thing to log, so its "+" is the yellow action (mockup "Hoy").
-          entries.length === 0 ? 'bg-accent text-on-accent' : 'bg-surface-2 text-accent',
-          focusRing,
-          pressable,
+    </>
+  )
+
+  return (
+    <section
+      aria-label={label}
+      className="rounded-card border border-surface-2 bg-surface p-3 text-on-surface"
+    >
+      <div className="flex items-center gap-3">
+        {entries.length > 0 ? (
+          // HU-06 CA1: the meal opens its list, and each food its sheet.
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls={listId}
+            onClick={() => setExpanded(!expanded)}
+            className={cx(
+              'flex min-w-0 flex-1 items-center gap-3 rounded-icon text-left',
+              focusRing,
+            )}
+          >
+            {header}
+          </button>
+        ) : (
+          <div className="flex min-w-0 flex-1 items-center gap-3">{header}</div>
         )}
-      >
-        <Plus aria-hidden="true" className="size-6" />
-      </Link>
-    </div>
+        <Link
+          to={`/add?${addParams.toString()}`}
+          aria-label={`Agregar a ${label}`}
+          className={cx(
+            'grid size-12 shrink-0 place-items-center rounded-full',
+            // An empty meal is the next thing to log, so its "+" is the yellow action (mockup "Hoy").
+            entries.length === 0 ? 'bg-accent text-on-accent' : 'bg-surface-2 text-accent',
+            focusRing,
+            pressable,
+          )}
+        >
+          <Plus aria-hidden="true" className="size-6" />
+        </Link>
+      </div>
+      {open && (
+        <ul id={listId} className="mt-3 space-y-1 border-t border-surface-2 pt-2">
+          {entries.map((entry) => (
+            <li key={entry.id}>
+              <button
+                type="button"
+                onClick={() => onSelectEntry(entry)}
+                className={cx(
+                  'flex min-h-11 w-full items-center justify-between gap-3 rounded-field px-2 text-left',
+                  focusRing,
+                  pressable,
+                )}
+              >
+                <span className="min-w-0">
+                  <span className="block truncate font-bold">{entry.foodName}</span>
+                  <span className="block text-sm font-semibold text-on-surface-muted">
+                    {formatGrams(entry.grams)} g
+                  </span>
+                </span>
+                <span className="shrink-0 font-extrabold tabular-nums">
+                  {formatKcal(entry.nutrients.kcal)} kcal
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
