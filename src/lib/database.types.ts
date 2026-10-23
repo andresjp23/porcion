@@ -166,6 +166,9 @@ isOneToOne: false
 "has_consented":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"is_my_food":
+{ Args: { "target_food_id": string }; Returns: boolean
+                           },
 "is_valid_gtin":
 { Args: { "code": string }; Returns: boolean
                            },
