@@ -52,7 +52,7 @@ export default defineConfig({
   server: {
     // Testing on a phone (camera, Google sign-in) goes through an ngrok tunnel
     // with a fixed https domain. See "Probar en el teléfono" in CLAUDE.md.
-    allowedHosts: ['.ngrok-free.app', '.ngrok.app'],
+    allowedHosts: ['.ngrok-free.app', '.ngrok-free.dev', '.ngrok.app'],
     // The phone reaches local Supabase through the dev server, so the app
     // only talks to one https origin (VITE_SUPABASE_URL=/supabase).
     proxy: {
