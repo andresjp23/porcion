@@ -10,6 +10,7 @@ import { EditFoodPage } from '@/features/foods/EditFoodPage'
 import { FoodDetailPage } from '@/features/foods/FoodDetailPage'
 import { OnboardingPage } from '@/features/onboarding/OnboardingPage'
 import { ScanPage } from '@/features/scanner/ScanPage'
+import { ShoppingPage } from '@/features/shopping/ShoppingPage'
 import { TodayPage } from '@/features/today/TodayPage'
 import { NotFoundPage } from './NotFoundPage'
 import { StageGuard } from './StageGuard'
@@ -46,6 +47,7 @@ export const routes: RouteObject[] = [
       { path: '/foods/:id', element: <FoodDetailPage /> },
       { path: '/foods/:id/edit', element: <EditFoodPage /> },
       { path: '/scan', element: <ScanPage /> },
+      { path: '/shopping', element: <ShoppingPage /> },
     ],
   },
 
