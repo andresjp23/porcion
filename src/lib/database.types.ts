@@ -123,6 +123,11 @@ isOneToOne: false
 "is_valid_gtin":
 { Args: { "code": string }; Returns: boolean
                            },
+"search_foods":
+{ Args: { "lim"?: number,"q": string }; Returns: {
+              "basis": Database["public"]['Enums']["food_basis"],"brand": string,"carbs_100": number,"default_portion_grams": number,"default_portion_id": string,"default_portion_name": string,"fat_100": number,"id": string,"kcal_100": number,"name": string,"open_reports": number,"protein_100": number,"source": Database["public"]['Enums']["food_source"],"verified": boolean
+            }[]
+                           },
 "unaccent_immutable":
 { Args: { "value": string }; Returns: string
                            }
