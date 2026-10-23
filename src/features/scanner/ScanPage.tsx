@@ -10,6 +10,7 @@ import { Button, buttonClasses, IconButton, Sheet } from '@/ui'
 import { focusRing } from '@/ui/styles'
 import { useBarcodeLookup, type BarcodeLookup } from './api'
 import { ScanFrame } from './ScanFrame'
+import { TorchButton } from './TorchButton'
 import { TypeCodeSheet } from './TypeCodeSheet'
 import { useBarcodeScanner } from './useBarcodeScanner'
 
@@ -47,7 +48,7 @@ export function ScanPage() {
     navigator.vibrate?.(50)
     setCode(barcode.code)
   }, [])
-  const { videoRef, status, retry } = useBarcodeScanner({
+  const { videoRef, status, retry, torch } = useBarcodeScanner({
     onDetect,
     paused: code !== null || typing,
   })
@@ -89,6 +90,7 @@ export function ScanPage() {
           <h1 className="justify-self-center rounded-pill bg-camera/70 px-4 py-1 text-xl font-extrabold">
             Escanear producto
           </h1>
+          {torch && <TorchButton on={torch.on} onToggle={torch.toggle} />}
         </header>
 
         {cameraProblem ? (

@@ -25,6 +25,15 @@ type Options = {
 
 const FRAME_INTERVAL_MS = 200
 
+// `torch` is not in the DOM typings yet; only Chrome on Android exposes it.
+type TorchCapabilities = MediaTrackCapabilities & { torch?: boolean }
+type TorchConstraintSet = MediaTrackConstraintSet & { torch?: boolean }
+
+function supportsTorch(track: MediaStreamTrack | undefined): track is MediaStreamTrack {
+  const capabilities = track?.getCapabilities?.() as TorchCapabilities | undefined
+  return capabilities?.torch === true
+}
+
 function isScanFormat(format: string): format is BarcodeFormat {
   return (SCAN_FORMATS as string[]).includes(format)
 }
@@ -38,11 +47,14 @@ function statusForCameraError(error: unknown): ScannerStatus {
  * Opens the rear camera into `videoRef` and reads EAN/UPC codes from it.
  * Codes with a bad check digit are skipped silently. The camera is released
  * on unmount; `retry` asks for it again (after the user allows it).
+ * `torch` is null unless the camera can turn its light on.
  */
 export function useBarcodeScanner({ onDetect, paused = false, repeatAfterMs = 2000 }: Options) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [status, setStatus] = useState<ScannerStatus>('starting')
   const [attempt, setAttempt] = useState(0)
+  const [torchTrack, setTorchTrack] = useState<MediaStreamTrack | null>(null)
+  const [torchOn, setTorchOn] = useState(false)
 
   // Read on every frame without restarting the camera when they change.
   const onDetectRef = useRef(onDetect)
@@ -96,6 +108,8 @@ export function useBarcodeScanner({ onDetect, paused = false, repeatAfterMs = 20
       await video.play().catch(() => {})
       if (cancelled) return
       setStatus('scanning')
+      const track = stream.getVideoTracks?.()[0]
+      if (supportsTorch(track)) setTorchTrack(track)
 
       const tick = async () => {
         if (cancelled) return
@@ -125,10 +139,26 @@ export function useBarcodeScanner({ onDetect, paused = false, repeatAfterMs = 20
       clearTimeout(timer)
       stream?.getTracks().forEach((track) => track.stop())
       video.srcObject = null
+      // Stopping the track also turns its light off.
+      setTorchTrack(null)
+      setTorchOn(false)
     }
   }, [attempt, repeatAfterMs])
 
   const retry = useCallback(() => setAttempt((n) => n + 1), [])
 
-  return { videoRef, status, retry }
+  const toggleTorch = useCallback(() => {
+    if (!torchTrack) return
+    const next = !torchOn
+    const constraints: TorchConstraintSet = { torch: next }
+    // Only flip the button once the camera accepted it; otherwise it stays as it was.
+    torchTrack
+      .applyConstraints({ advanced: [constraints] })
+      .then(() => setTorchOn(next))
+      .catch(() => {})
+  }, [torchTrack, torchOn])
+
+  const torch = torchTrack ? { on: torchOn, toggle: toggleTorch } : null
+
+  return { videoRef, status, retry, torch }
 }

@@ -22,12 +22,18 @@ const scanner = {
   onDetect: null as ((barcode: Barcode) => void) | null,
   paused: false,
   retry: vi.fn(),
+  torch: null as { on: boolean; toggle: () => void } | null,
 }
 vi.mock('./useBarcodeScanner', () => ({
   useBarcodeScanner: (options: { onDetect: (barcode: Barcode) => void; paused: boolean }) => {
     scanner.onDetect = options.onDetect
     scanner.paused = options.paused
-    return { videoRef: { current: null }, status: scanner.status, retry: scanner.retry }
+    return {
+      videoRef: { current: null },
+      status: scanner.status,
+      retry: scanner.retry,
+      torch: scanner.torch,
+    }
   },
 }))
 
@@ -58,9 +64,25 @@ beforeEach(() => {
   resetSupabaseMock()
   fetchOffProduct.mockReset()
   scanner.status = 'scanning'
+  scanner.torch = null
 })
 
 describe('ScanPage', () => {
+  it('has no torch button when the camera has no light', () => {
+    renderPage()
+    expect(screen.queryByRole('button', { name: 'Linterna' })).not.toBeInTheDocument()
+  })
+
+  it('toggles the torch when the camera has a light', async () => {
+    const toggle = vi.fn()
+    scanner.torch = { on: false, toggle }
+    renderPage()
+    const button = screen.getByRole('button', { name: 'Linterna' })
+    expect(button).toHaveAttribute('aria-pressed', 'false')
+    await userEvent.click(button)
+    expect(toggle).toHaveBeenCalled()
+  })
+
   it('opens the Detail of a food already in the base, keeping meal and day (HU-08 CA3)', async () => {
     queueQueryResult('foods', { data: { id: FOOD_ID }, error: null })
     renderPage('/scan?meal=lunch&date=2026-10-20')

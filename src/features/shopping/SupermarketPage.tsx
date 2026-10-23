@@ -9,6 +9,7 @@ import { foodDisplayName } from '@/features/foods/serving'
 import { useTimeZone } from '@/features/profile/useProfile'
 import { lookupBarcode } from '@/features/scanner/api'
 import { ScanFrame } from '@/features/scanner/ScanFrame'
+import { TorchButton } from '@/features/scanner/TorchButton'
 import { TypeCodeSheet } from '@/features/scanner/TypeCodeSheet'
 import { useBarcodeScanner } from '@/features/scanner/useBarcodeScanner'
 import { cx } from '@/lib/cx'
@@ -127,7 +128,7 @@ export function SupermarketPage() {
     [active.data, save, timeZone],
   )
 
-  const { videoRef, status, retry } = useBarcodeScanner({
+  const { videoRef, status, retry, torch } = useBarcodeScanner({
     onDetect: (barcode) => void onDetect(barcode),
     paused: busy || typing || summaryOpen || question !== null,
   })
@@ -166,10 +167,13 @@ export function SupermarketPage() {
           )}
         />
         <div className="relative flex h-full flex-col items-center justify-between p-4">
-          <p className="inline-flex items-center gap-2 self-start rounded-pill bg-camera/70 px-3 py-1 text-sm font-bold">
-            <span aria-hidden="true" className="size-2.5 rounded-full bg-accent" />
-            Escaneo continuo
-          </p>
+          <div className="flex items-start justify-between self-stretch">
+            <p className="inline-flex items-center gap-2 rounded-pill bg-camera/70 px-3 py-1 text-sm font-bold">
+              <span aria-hidden="true" className="size-2.5 rounded-full bg-accent" />
+              Escaneo continuo
+            </p>
+            {torch && <TorchButton on={torch.on} onToggle={torch.toggle} />}
+          </div>
           {cameraProblem ? (
             <div className="space-y-3 text-center">
               <p className="font-bold">

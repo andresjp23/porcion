@@ -21,12 +21,13 @@ class FakeBarcodeDetector {
 }
 
 function Scanner(props: { onDetect: (barcode: Barcode) => void; paused?: boolean }) {
-  const { videoRef, status, retry } = useBarcodeScanner(props)
+  const { videoRef, status, retry, torch } = useBarcodeScanner(props)
   return (
     <>
       <video ref={videoRef} muted playsInline />
       <p>{status}</p>
       <button onClick={retry}>retry</button>
+      {torch && <button onClick={torch.toggle}>{torch.on ? 'torch on' : 'torch off'}</button>}
     </>
   )
 }
@@ -136,6 +137,50 @@ describe('useBarcodeScanner', () => {
     await vi.waitFor(() =>
       expect(onDetect).toHaveBeenCalledWith({ code: '7802800000005', format: 'ean_13' }),
     )
+  })
+
+  it('offers no torch when the camera has no light', async () => {
+    getUserMedia.mockResolvedValue({
+      getTracks: () => [{ stop: stopTrack }],
+      getVideoTracks: () => [{ getCapabilities: () => ({}) }],
+    })
+    render(<Scanner onDetect={vi.fn()} />)
+    await frames()
+    expect(screen.queryByText(/torch/)).not.toBeInTheDocument()
+  })
+
+  it('turns the torch on and off when the camera supports it', async () => {
+    const applyConstraints = vi.fn(async () => {})
+    getUserMedia.mockResolvedValue({
+      getTracks: () => [{ stop: stopTrack }],
+      getVideoTracks: () => [{ getCapabilities: () => ({ torch: true }), applyConstraints }],
+    })
+    render(<Scanner onDetect={vi.fn()} />)
+    await frames()
+
+    await act(async () => screen.getByRole('button', { name: 'torch off' }).click())
+    expect(applyConstraints).toHaveBeenLastCalledWith({ advanced: [{ torch: true }] })
+    expect(screen.getByRole('button', { name: 'torch on' })).toBeInTheDocument()
+
+    await act(async () => screen.getByRole('button', { name: 'torch on' }).click())
+    expect(applyConstraints).toHaveBeenLastCalledWith({ advanced: [{ torch: false }] })
+    expect(screen.getByRole('button', { name: 'torch off' })).toBeInTheDocument()
+  })
+
+  it('keeps the torch off when the camera refuses it', async () => {
+    getUserMedia.mockResolvedValue({
+      getTracks: () => [{ stop: stopTrack }],
+      getVideoTracks: () => [
+        {
+          getCapabilities: () => ({ torch: true }),
+          applyConstraints: vi.fn(async () => Promise.reject(new Error('busy'))),
+        },
+      ],
+    })
+    render(<Scanner onDetect={vi.fn()} />)
+    await frames()
+    await act(async () => screen.getByRole('button', { name: 'torch off' }).click())
+    expect(screen.getByRole('button', { name: 'torch off' })).toBeInTheDocument()
   })
 
   it('releases the camera on unmount', async () => {
