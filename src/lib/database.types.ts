@@ -294,6 +294,9 @@ isOneToOne: false
                            },
 "unaccent_immutable":
 { Args: { "value": string }; Returns: string
+                           },
+"update_food":
+{ Args: { "basis": Database["public"]['Enums']["food_basis"],"brand"?: string,"carbs_100": number,"fat_100": number,"food_id": string,"kcal_100": number,"name": string,"portions"?: Json,"protein_100": number }; Returns: undefined
                            }
           }
           Enums: {

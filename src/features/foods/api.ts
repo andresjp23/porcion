@@ -129,7 +129,10 @@ export function useMyFoods(enabled: boolean) {
 export type FoodPortion = { id: string; name: string; grams: number; isDefault: boolean }
 
 /** A food with all its portions, for the Detail (HU-05). */
-export type FoodDetail = Omit<FoodListItem, 'defaultPortion'> & { portions: FoodPortion[] }
+export type FoodDetail = Omit<FoodListItem, 'defaultPortion'> & {
+  barcode: string | null
+  portions: FoodPortion[]
+}
 
 const foodDetailSchema = z
   .object({
@@ -144,6 +147,7 @@ const foodDetailSchema = z
     source: z.enum(['seed', 'off', 'user']),
     verified: z.boolean(),
     open_reports: z.number(),
+    barcode: z.string().nullable(),
     food_portions: z.array(
       z.object({ id: z.string(), name: z.string(), grams: z.number(), is_default: z.boolean() }),
     ),
@@ -162,6 +166,7 @@ const foodDetailSchema = z
     source: row.source,
     verified: row.verified,
     openReports: row.open_reports,
+    barcode: row.barcode,
     // Default first, then from the smallest portion up.
     portions: row.food_portions
       .map((p) => ({ id: p.id, name: p.name, grams: p.grams, isDefault: p.is_default }))
@@ -170,7 +175,7 @@ const foodDetailSchema = z
 
 // Explicit columns: created_by is not readable by other users (R-11, B-7).
 const FOOD_DETAIL_COLUMNS =
-  'id, name, brand, basis, kcal_100, protein_100, carbs_100, fat_100, source, verified, open_reports, food_portions (id, name, grams, is_default)'
+  'id, name, brand, basis, kcal_100, protein_100, carbs_100, fat_100, source, verified, open_reports, barcode, food_portions (id, name, grams, is_default)'
 
 export const foodDetailKeys = {
   detail: (id: string) => ['foods', 'detail', id] as const,
@@ -329,6 +334,61 @@ export function useReportFood(foodId: string) {
       queryClient.setQueryData(reportKey(foodId), true)
       // open_reports changed, and with it maybe "Datos en revisión".
       void queryClient.invalidateQueries({ queryKey: foodDetailKeys.detail(foodId) })
+    },
+  })
+}
+
+/** R-11: whether the user may still edit this food (author, 24 h, nobody else logged it). */
+export function useCanEditFood(foodId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['foods', 'can-edit', foodId] as const,
+    enabled,
+    queryFn: async ({ signal }) => {
+      const { data, error } = await supabase
+        .rpc('can_edit_food', { target_food_id: foodId })
+        .abortSignal(signal)
+      if (error) throw error
+      return data === true
+    },
+  })
+}
+
+export type FoodChanges = Omit<NewFood, 'barcode' | 'portions'> & {
+  /** With `id` for the portions that stay; the first is the default. */
+  portions: { id?: string; name: string; grams: number }[]
+}
+
+const INSUFFICIENT_PRIVILEGE = '42501'
+
+/** The edit window closed between opening the form and saving it. */
+export class EditWindowClosedError extends Error {
+  constructor() {
+    super('edit window closed')
+  }
+}
+
+/** B-7b: saves the author's changes to a food and its portions in one call. */
+export function useUpdateFood(foodId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (food: FoodChanges) => {
+      const { error } = await supabase.rpc('update_food', {
+        food_id: foodId,
+        name: food.name,
+        brand: food.brand,
+        basis: food.basis,
+        kcal_100: food.per100.kcal,
+        protein_100: food.per100.protein,
+        carbs_100: food.per100.carbs,
+        fat_100: food.per100.fat,
+        portions: food.portions,
+      })
+      if (error?.code === INSUFFICIENT_PRIVILEGE) throw new EditWindowClosedError()
+      if (error) throw error
+    },
+    onSettled: () => {
+      // Name, values and portions show up in the Detail, the lists and the search.
+      void queryClient.invalidateQueries({ queryKey: ['foods'] })
     },
   })
 }

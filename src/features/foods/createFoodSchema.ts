@@ -41,6 +41,8 @@ export const createFoodSchema = z
     portions: z
       .array(
         z.object({
+          /** Set for a portion that already exists (B-7b), so it keeps its id. */
+          id: z.string().optional(),
           name: z.string().trim().min(1, 'Escribe el nombre').max(40, 'Usa hasta 40 caracteres'),
           grams: decimalText.pipe(
             z

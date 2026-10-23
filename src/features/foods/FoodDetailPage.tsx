@@ -1,6 +1,6 @@
-import { ChevronLeft, CircleAlert, Flag, Info, SearchX, Star } from 'lucide-react'
+import { ChevronLeft, CircleAlert, Flag, Info, Pencil, SearchX, Star } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { nutrientsForGrams } from '@/domain/nutrition'
 import { isUnderReview } from '@/domain/reports'
 import { useAddLog } from '@/features/today/api'
@@ -10,6 +10,7 @@ import { formatDay, formatGrams, formatKcal } from '@/lib/format'
 import { MEALS } from '@/lib/meals'
 import { useGoBack } from '@/lib/useGoBack'
 import { Button, Card, Chip, EmptyState, IconButton, Stepper, type Macro } from '@/ui'
+import { focusRing, pressable } from '@/ui/styles'
 import {
   amountGrams,
   amountLabel,
@@ -21,6 +22,7 @@ import {
   type Amount,
 } from './amount'
 import {
+  useCanEditFood,
   useFoodDetail,
   useHasOpenReport,
   useIsFavorite,
@@ -126,7 +128,10 @@ function FoodDetailView({ food }: { food: FoodDetail }) {
             size="lg"
             onClick={goBack}
           />
-          <FavoriteButton foodId={food.id} />
+          <div className="flex items-center gap-2">
+            {food.source === 'user' && <EditLink foodId={food.id} />}
+            <FavoriteButton foodId={food.id} />
+          </div>
         </div>
         <div className="space-y-1">
           <p className="text-sm font-bold text-ink-muted">
@@ -299,5 +304,25 @@ function ReportSection({ foodId }: { foodId: string }) {
       )}
       <ReportSheet foodId={foodId} open={open} onClose={() => setOpen(false)} />
     </section>
+  )
+}
+
+/** B-7b: only while the author may still edit it (R-11). */
+function EditLink({ foodId }: { foodId: string }) {
+  const [params] = useSearchParams()
+  const canEdit = useCanEditFood(foodId, true)
+  if (canEdit.data !== true) return null
+  return (
+    <Link
+      to={`/foods/${foodId}/edit${params.size > 0 ? `?${params.toString()}` : ''}`}
+      aria-label="Editar alimento"
+      className={cx(
+        'grid size-12 place-items-center rounded-full border border-surface-2 bg-surface text-accent',
+        focusRing,
+        pressable,
+      )}
+    >
+      <Pencil aria-hidden="true" />
+    </Link>
   )
 }

@@ -1,7 +1,12 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithAuth, resetSupabaseMock, signedInSession } from '@/test/renderWithAuth'
-import { supabase as mock, queueQueryResult, setTableDefault } from '@/test/supabaseMock'
+import {
+  supabase as mock,
+  queueQueryResult,
+  setRpcDefault,
+  setTableDefault,
+} from '@/test/supabaseMock'
 import { FoodDetailPage } from './FoodDetailPage'
 
 vi.mock('@/lib/supabase', () => import('@/test/supabaseMock'))
@@ -21,6 +26,7 @@ function marraqueta(overrides: Record<string, unknown> = {}) {
     source: 'seed',
     verified: true,
     open_reports: 0,
+    barcode: null,
     food_portions: [
       { id: 'half', name: '1/2 marraqueta', grams: 50, is_default: false },
       { id: 'whole', name: '1 marraqueta', grams: 100, is_default: true },
@@ -276,5 +282,26 @@ describe('FoodDetailPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: /^Agregar a/ }))
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos agregarlo')
     expect(router.state.location.pathname).toBe(`/foods/${FOOD_ID}`)
+  })
+
+  it('lets the author edit a community food while the window is open (B-7b)', async () => {
+    given(marraqueta({ source: 'user' }))
+    setRpcDefault('can_edit_food', { data: true, error: null })
+    renderDetail()
+    expect(await screen.findByRole('link', { name: 'Editar alimento' })).toHaveAttribute(
+      'href',
+      `/foods/${FOOD_ID}/edit?meal=lunch`,
+    )
+  })
+
+  it('hides Editar when the user may not edit it', async () => {
+    given(marraqueta({ source: 'user' }))
+    setRpcDefault('can_edit_food', { data: false, error: null })
+    renderDetail()
+    await screen.findByRole('heading', { name: 'Marraqueta' })
+    await vi.waitFor(() =>
+      expect(vi.mocked(mock.rpc).mock.calls.some(([fn]) => fn === 'can_edit_food')).toBe(true),
+    )
+    expect(screen.queryByRole('link', { name: 'Editar alimento' })).not.toBeInTheDocument()
   })
 })
