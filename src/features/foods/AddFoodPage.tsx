@@ -8,7 +8,13 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useGoBack } from '@/lib/useGoBack'
 import { Button, Chip, EmptyState, FoodRow, IconButton, Segmented } from '@/ui'
 import { focusRing, pressable } from '@/ui/styles'
-import { useFavoriteFoods, useFoodSearch, useMyFoods, type FoodListItem } from './api'
+import {
+  useFavoriteFoods,
+  useFoodSearch,
+  useMyFoods,
+  useRecentFoods,
+  type FoodListItem,
+} from './api'
 import { defaultServing } from './serving'
 import { useMealParam } from './useMealParam'
 
@@ -100,7 +106,7 @@ export function AddFoodPage() {
             value={tab}
             onChange={(value) => setParam('tab', value === 'recent' ? '' : value)}
           />
-          {tab === 'recent' && <RecentTab />}
+          {tab === 'recent' && <RecentTab onSelect={openFood} />}
           {tab === 'favorites' && <FavoritesTab onSelect={openFood} />}
           {tab === 'mine' && <MyFoodsTab meal={meal} onSelect={openFood} />}
         </>
@@ -220,13 +226,19 @@ function resultsStatus(count: number) {
   return count === 1 ? '1 resultado' : `${count} resultados`
 }
 
-function RecentTab() {
-  // recent_foods arrives with food_logs (L-1). Until then nobody has logged anything.
+function RecentTab({ onSelect }: { onSelect: (food: FoodListItem) => void }) {
+  const recent = useRecentFoods(true)
   return (
-    <EmptyState
-      icon={<Clock aria-hidden="true" />}
-      title="Aún no registras comidas"
-      description="Lo que agregues aparecerá aquí para repetirlo rápido."
+    <ListState
+      query={recent}
+      onSelect={onSelect}
+      empty={
+        <EmptyState
+          icon={<Clock aria-hidden="true" />}
+          title="Aún no registras comidas"
+          description="Lo que agregues aparecerá aquí para repetirlo rápido."
+        />
+      }
     />
   )
 }

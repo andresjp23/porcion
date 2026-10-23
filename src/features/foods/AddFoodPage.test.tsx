@@ -77,12 +77,19 @@ describe('AddFoodPage', () => {
   })
 
   it('shows Recientes with the field empty (HU-04 CA2)', async () => {
+    setRpcDefault('recent_foods', { data: [row({ name: 'Marraqueta' })], error: null })
     renderPage()
     expect(await screen.findByRole('button', { name: 'Recientes' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
-    expect(screen.getByText('Aún no registras comidas')).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /^Marraqueta/ })).toBeInTheDocument()
+  })
+
+  it('invites to log the first meal while Recientes is empty', async () => {
+    setRpcDefault('recent_foods', { data: [], error: null })
+    renderPage()
+    expect(await screen.findByText('Aún no registras comidas')).toBeInTheDocument()
   })
 
   it('searches once the user stops typing (HU-04 CA3)', async () => {

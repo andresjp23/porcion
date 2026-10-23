@@ -65,6 +65,7 @@ const foodListSchema = z.array(foodListItemSchema)
 export const foodKeys = {
   search: (q: string) => ['foods', 'search', q] as const,
   favorites: ['foods', 'favorites'] as const,
+  recent: ['foods', 'recent'] as const,
   mine: ['foods', 'mine'] as const,
 }
 
@@ -82,6 +83,19 @@ export function useFoodSearch(q: string) {
       const { data, error } = await supabase
         .rpc('search_foods', { q, lim: SEARCH_LIMIT })
         .abortSignal(signal)
+      if (error) throw error
+      return foodListSchema.parse(data)
+    },
+  })
+}
+
+/** HU-04 CA2: what the user logged lately, one row per food. */
+export function useRecentFoods(enabled: boolean) {
+  return useQuery({
+    queryKey: foodKeys.recent,
+    enabled,
+    queryFn: async ({ signal }) => {
+      const { data, error } = await supabase.rpc('recent_foods').abortSignal(signal)
       if (error) throw error
       return foodListSchema.parse(data)
     },
