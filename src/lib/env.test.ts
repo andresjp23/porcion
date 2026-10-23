@@ -17,6 +17,11 @@ describe('parseEnv', () => {
     expect(parseEnv(base).VITE_OFF_USER_AGENT).toMatch(/^Porcion\/0\.1 /)
   })
 
+  it('resolves a path against this origin (dev proxy for the phone)', () => {
+    const env = parseEnv({ VITE_SUPABASE_URL: '/supabase', VITE_SUPABASE_ANON_KEY: 'anon' })
+    expect(env.VITE_SUPABASE_URL).toBe(`${window.location.origin}/supabase`)
+  })
+
   it('names the missing or invalid variables', () => {
     expect(() => parseEnv({ VITE_SUPABASE_URL: 'not a url' })).toThrow(
       /VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY/,

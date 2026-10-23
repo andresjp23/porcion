@@ -51,6 +51,22 @@ npm run seed:build    # valida data/ y genera supabase/seed.sql
 npm run test:db       # tests pgTAP de supabase/tests (RLS, triggers)
 ```
 
+### Probar en el teléfono
+
+La cámara exige HTTPS y Google no acepta volver a una IP, así que el teléfono entra por un túnel de ngrok con dominio fijo (cuenta gratis). Vite reenvía `/supabase` al Supabase local, así el teléfono habla con un solo origen.
+
+Una vez:
+1. `ngrok config add-authtoken <token>` y anotar el dominio fijo del panel de ngrok (Domains).
+2. En Google Cloud Console → el cliente OAuth → URIs de redireccionamiento autorizados, agregar `https://<dominio>/supabase/auth/v1/callback`.
+
+Cada vez que se prueba en el teléfono:
+1. En `.env.local`: `VITE_SUPABASE_URL=/supabase` y `SUPABASE_AUTH_EXTERNAL_GOOGLE_REDIRECT_URI=https://<dominio>/supabase/auth/v1/callback`.
+2. `supabase stop && supabase start` (conserva los datos) para que tome la dirección de Google.
+3. `npm run dev` y, en otra terminal, `ngrok http --url=<dominio> 5173`.
+4. Abrir `https://<dominio>` en el teléfono. ngrok muestra un aviso la primera vez: tocar "Visit Site".
+
+Al terminar, volver `.env.local` a `http://127.0.0.1:54321` y `http://127.0.0.1:54321/auth/v1/callback`, y reiniciar Supabase, o Google en el computador intentará volver por el túnel.
+
 ## Estructura de carpetas
 
 ```

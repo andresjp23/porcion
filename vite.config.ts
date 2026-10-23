@@ -49,6 +49,20 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  server: {
+    // Testing on a phone (camera, Google sign-in) goes through an ngrok tunnel
+    // with a fixed https domain. See "Probar en el teléfono" in CLAUDE.md.
+    allowedHosts: ['.ngrok-free.app', '.ngrok.app'],
+    // The phone reaches local Supabase through the dev server, so the app
+    // only talks to one https origin (VITE_SUPABASE_URL=/supabase).
+    proxy: {
+      '/supabase': {
+        target: 'http://127.0.0.1:54321',
+        rewrite: (path) => path.replace(/^\/supabase/, ''),
+        ws: true,
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',

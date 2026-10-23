@@ -161,7 +161,8 @@ site_url = "http://localhost:5173"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["http://localhost:5173", "https://localhost:5173", "http://localhost:5173/**"]
+# The ngrok domains are for testing on a phone (CLAUDE.md, "Probar en el teléfono").
+additional_redirect_urls = ["http://localhost:5173", "https://localhost:5173", "http://localhost:5173/**", "https://*.ngrok-free.app", "https://*.ngrok-free.app/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -353,7 +354,9 @@ email_optional = false
 enabled = true
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
-redirect_uri = ""
+# Set in .env.local: http://127.0.0.1:54321/auth/v1/callback by default. For the
+# phone, set it to https://<ngrok domain>/supabase/auth/v1/callback.
+redirect_uri = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_REDIRECT_URI)"
 url = ""
 skip_nonce_check = false
 email_optional = false
