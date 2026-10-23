@@ -1,4 +1,4 @@
-import { formatFactor, formatGrams, formatKcal } from './format'
+import { formatDay, formatFactor, formatGrams, formatKcal } from './format'
 
 describe('formatKcal', () => {
   it('rounds to an integer and groups thousands with a dot', () => {
@@ -21,5 +21,12 @@ describe('formatFactor', () => {
     expect(formatFactor(1.55)).toBe('1,55')
     expect(formatFactor(1.375)).toBe('1,375')
     expect(formatFactor(1.2)).toBe('1,2')
+  })
+})
+
+describe('formatDay', () => {
+  it('writes the weekday, day and month like the Hoy header', () => {
+    expect(formatDay('2026-10-22')).toBe('Jue 22 oct')
+    expect(formatDay('2026-01-05')).toBe('Lun 5 ene')
   })
 })

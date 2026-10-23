@@ -9,6 +9,7 @@ import { CreateFoodPage } from '@/features/foods/CreateFoodPage'
 import { FoodDetailPage } from '@/features/foods/FoodDetailPage'
 import { OnboardingPage } from '@/features/onboarding/OnboardingPage'
 import { TodayPage } from '@/features/today/TodayPage'
+import { NotFoundPage } from './NotFoundPage'
 import { StageGuard } from './StageGuard'
 
 const devRoutes: RouteObject[] = [
@@ -45,6 +46,8 @@ export const routes: RouteObject[] = [
   },
 
   ...(import.meta.env.DEV ? devRoutes : []),
+
+  { path: '*', element: <NotFoundPage /> },
 ]
 
 export const router = createBrowserRouter(routes)

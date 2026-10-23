@@ -17,7 +17,7 @@ describe('router', () => {
       error: null,
     })
     renderWithAuth(routes, { path: '/', session: signedInSession })
-    expect(await screen.findByRole('heading', { name: 'Hoy' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Hoy vas bien' })).toBeInTheDocument()
   })
 
   it('shows Ingresar at / without a session', async () => {

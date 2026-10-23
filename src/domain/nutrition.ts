@@ -61,14 +61,9 @@ export function nutrientsPer100ForRecipe(
   if (!Number.isFinite(cookedGrams) || cookedGrams <= 0) {
     throw new RangeError(`cookedGrams must be a finite number > 0, got ${cookedGrams}`)
   }
-  const total: Nutrients = { kcal: 0, protein: 0, carbs: 0, fat: 0 }
-  for (const { per100, grams } of ingredients) {
-    const n = nutrientsForGrams(per100, grams)
-    total.kcal += n.kcal
-    total.protein += n.protein
-    total.carbs += n.carbs
-    total.fat += n.fat
-  }
+  const total = sumNutrients(
+    ingredients.map(({ per100, grams }) => nutrientsForGrams(per100, grams)),
+  )
   const factor = 100 / cookedGrams
   return {
     kcal: total.kcal * factor,
@@ -76,4 +71,16 @@ export function nutrientsPer100ForRecipe(
     carbs: total.carbs * factor,
     fat: total.fat * factor,
   }
+}
+
+/** Adds up the nutrients of several logs, e.g. a meal or a whole day. */
+export function sumNutrients(items: Nutrients[]): Nutrients {
+  const total: Nutrients = { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+  for (const item of items) {
+    total.kcal += item.kcal
+    total.protein += item.protein
+    total.carbs += item.carbs
+    total.fat += item.fat
+  }
+  return total
 }

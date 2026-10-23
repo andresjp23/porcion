@@ -17,3 +17,19 @@ export function formatGrams(value: number) {
 export function formatFactor(value: number) {
   return factorFormat.format(value)
 }
+
+const dayFormat = new Intl.DateTimeFormat('es-CL', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+})
+
+/** A calendar day as in the Hoy header: "2026-10-22" → "Jue 22 oct". */
+export function formatDay(isoDate: string) {
+  const parts = dayFormat.formatToParts(new Date(`${isoDate}T12:00:00Z`))
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value.replace('.', '') ?? ''
+  const weekday = get('weekday')
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)} ${get('day')} ${get('month')}`
+}

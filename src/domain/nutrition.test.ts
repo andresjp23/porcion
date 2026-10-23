@@ -3,6 +3,7 @@ import {
   nutrientsForGrams,
   nutrientsForPortion,
   nutrientsPer100ForRecipe,
+  sumNutrients,
   type Nutrients,
 } from './nutrition'
 
@@ -86,5 +87,20 @@ describe('nutrientsPer100ForRecipe', () => {
 
   it('rejects a cooked weight that is not positive', () => {
     expect(() => nutrientsPer100ForRecipe([{ per100: flour, grams: 100 }], 0)).toThrow(RangeError)
+  })
+})
+
+describe('sumNutrients', () => {
+  it('adds every nutrient', () => {
+    expect(sumNutrients([bread, { kcal: 74, protein: 6.2, carbs: 0.5, fat: 5 }])).toEqual({
+      kcal: 341,
+      protein: 14.8,
+      carbs: 55.9,
+      fat: 6.2,
+    })
+  })
+
+  it('is zero for nothing', () => {
+    expect(sumNutrients([])).toEqual({ kcal: 0, protein: 0, carbs: 0, fat: 0 })
   })
 })
