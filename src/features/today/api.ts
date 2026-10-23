@@ -49,9 +49,10 @@ const logEntrySchema = z
 export const dayKey = (date: string) => ['day', date] as const
 
 /** The day's logs in the order they were added. */
-export function useDayLogs(date: string) {
+export function useDayLogs(date: string, enabled = true) {
   return useQuery({
     queryKey: dayKey(date),
+    enabled,
     queryFn: async ({ signal }) => {
       const { data, error } = await supabase
         .from('food_logs')
@@ -201,6 +202,26 @@ export function useDeleteLog(date: string) {
       ),
     }),
     onError: (_error, _entry, context) => context?.rollback(),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: dayKey(date) })
+      void queryClient.invalidateQueries({ queryKey: foodKeys.recent })
+    },
+  })
+}
+
+/** HU-07: copies a meal of another day (yesterday) to this one. */
+export function useCopyMeal(date: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ fromDate, meal }: { fromDate: string; meal: Meal }) => {
+      const { data, error } = await supabase.rpc('copy_meal', {
+        from_date: fromDate,
+        to_date: date,
+        m: meal,
+      })
+      if (error) throw error
+      return z.number().parse(data)
+    },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: dayKey(date) })
       void queryClient.invalidateQueries({ queryKey: foodKeys.recent })

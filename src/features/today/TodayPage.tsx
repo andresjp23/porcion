@@ -4,6 +4,7 @@ import {
   Leaf,
   Moon,
   Plus,
+  Repeat,
   Soup,
   Sun,
   SearchX,
@@ -22,7 +23,7 @@ import { formatDay, formatGrams, formatKcal } from '@/lib/format'
 import { MEALS } from '@/lib/meals'
 import { BottomNav, Button, Card, EmptyState, IconButton, MacroBar, Ring, Toast } from '@/ui'
 import { focusRing, pressable } from '@/ui/styles'
-import { useAddLog, useDayLogs, useDeleteLog, type LogEntry } from './api'
+import { useAddLog, useCopyMeal, useDayLogs, useDeleteLog, type LogEntry } from './api'
 import { LogSheet } from './LogSheet'
 import { useLogDate } from './useLogDate'
 
@@ -41,6 +42,9 @@ export function TodayPage() {
   const auth = useAuth()
   const profile = useProfile(auth.status === 'signedIn' ? auth.session.user.id : undefined)
   const logs = useDayLogs(date)
+  // HU-07 CA1: only today offers to repeat yesterday.
+  const yesterday = addDays(today, -1)
+  const yesterdayLogs = useDayLogs(yesterday, isToday)
   const navigate = useNavigate()
   const [selected, setSelected] = useState<LogEntry | null>(null)
   const [notice, setNotice] = useState<{ message: string; undo?: LogEntry } | null>(null)
@@ -93,7 +97,7 @@ export function TodayPage() {
   const over = consumed && targets && dayBalance(consumed.kcal, targets.kcal).status === 'over'
   // R-08: never a reproach, also in the heading.
   const heading = !isToday
-    ? date === addDays(today, -1)
+    ? date === yesterday
       ? 'Ayer'
       : 'Tu día'
     : over
@@ -132,6 +136,11 @@ export function TodayPage() {
                     isToday={isToday}
                     entries={logs.data.filter((entry) => entry.meal === value)}
                     onSelectEntry={setSelected}
+                    yesterday={
+                      isToday
+                        ? (yesterdayLogs.data ?? []).filter((entry) => entry.meal === value)
+                        : []
+                    }
                   />
                 </li>
               ))}
@@ -283,6 +292,7 @@ function MealCard({
   isToday,
   entries,
   onSelectEntry,
+  yesterday,
 }: {
   meal: Meal
   label: string
@@ -290,6 +300,8 @@ function MealCard({
   isToday: boolean
   entries: LogEntry[]
   onSelectEntry: (entry: LogEntry) => void
+  /** This meal yesterday, when Repetir applies (HU-07). */
+  yesterday: LogEntry[]
 }) {
   const [expanded, setExpanded] = useState(false)
   const listId = useId()
@@ -361,6 +373,9 @@ function MealCard({
           <Plus aria-hidden="true" className="size-6" />
         </Link>
       </div>
+      {entries.length === 0 && yesterday.length > 0 && (
+        <RepeatYesterday date={date} meal={meal} label={label} yesterday={yesterday} />
+      )}
       {open && (
         <ul id={listId} className="mt-3 space-y-1 border-t border-surface-2 pt-2">
           {entries.map((entry) => (
@@ -389,5 +404,45 @@ function MealCard({
         </ul>
       )}
     </section>
+  )
+}
+
+/** HU-07: an empty meal of today repeats what was eaten at that meal yesterday. */
+function RepeatYesterday({
+  date,
+  meal,
+  label,
+  yesterday,
+}: {
+  date: string
+  meal: Meal
+  label: string
+  yesterday: LogEntry[]
+}) {
+  const copy = useCopyMeal(date)
+  const summaryId = useId()
+  const kcal = sumNutrients(yesterday.map((entry) => entry.nutrients)).kcal
+  const foods = [...new Set(yesterday.map((entry) => entry.foodName))].join(', ')
+
+  return (
+    <div className="mt-3 space-y-2 border-t border-surface-2 pt-3">
+      <Button
+        variant="secondary"
+        size="md"
+        fullWidth
+        className="bg-surface-2"
+        icon={<Repeat aria-hidden="true" className="size-5 text-accent" />}
+        aria-describedby={summaryId}
+        disabled={copy.isPending}
+        onClick={() => copy.mutate({ fromDate: addDays(date, -1), meal })}
+      >
+        {copy.isPending ? 'Repitiendo…' : 'Repetir lo de ayer'}
+      </Button>
+      <p id={summaryId} className="text-center text-sm font-semibold text-on-surface-muted">
+        {copy.isError
+          ? `No pudimos repetir ${label.toLowerCase()}. Inténtalo de nuevo.`
+          : `${foods} · ${formatKcal(kcal)} kcal`}
+      </p>
+    </div>
   )
 }

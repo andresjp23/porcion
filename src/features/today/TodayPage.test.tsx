@@ -1,7 +1,12 @@
 import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithAuth, resetSupabaseMock, signedInSession } from '@/test/renderWithAuth'
-import { supabase as mock, setTableDefault } from '@/test/supabaseMock'
+import {
+  supabase as mock,
+  queueQueryResult,
+  queueRpcResult,
+  setTableDefault,
+} from '@/test/supabaseMock'
 import { TodayPage } from './TodayPage'
 
 vi.mock('@/lib/supabase', () => import('@/test/supabaseMock'))
@@ -261,6 +266,46 @@ describe('TodayPage', () => {
       const sheet = await screen.findByRole('dialog', { name: 'Marraqueta' })
       expect(within(sheet).getByLabelText('Gramos')).toHaveValue('100')
       expect(within(sheet).queryByRole('group', { name: 'Porción' })).not.toBeInTheDocument()
+    })
+  })
+
+  describe('repeating yesterday (HU-07)', () => {
+    const yesterdayBreakfast = [
+      log('breakfast', 'Marraqueta', 272),
+      log('breakfast', 'Palta Hass', 67),
+    ]
+
+    function givenDays(today: unknown[], yesterday: unknown[]) {
+      setTableDefault('profiles', { data: profile, error: null })
+      // Hoy asks for today first, then for yesterday.
+      queueQueryResult('food_logs', { data: today, error: null }, { data: yesterday, error: null })
+      setTableDefault('food_logs', { data: today, error: null })
+    }
+
+    it('offers to repeat an empty meal that yesterday had (CA1)', async () => {
+      givenDays([log('lunch', 'Arroz', 205)], yesterdayBreakfast)
+      queueRpcResult('copy_meal', { data: 2, error: null })
+      renderToday()
+
+      const breakfast = await screen.findByRole('region', { name: 'Desayuno' })
+      const repeat = await within(breakfast).findByRole('button', { name: 'Repetir lo de ayer' })
+      expect(repeat).toHaveAccessibleDescription('Marraqueta, Palta Hass · 339 kcal')
+      // Lunch has logs and dinner had nothing yesterday.
+      expect(screen.getAllByRole('button', { name: 'Repetir lo de ayer' })).toHaveLength(1)
+
+      await userEvent.click(repeat)
+      expect(mock.rpc).toHaveBeenCalledWith('copy_meal', {
+        from_date: '2026-10-21',
+        to_date: '2026-10-22',
+        m: 'breakfast',
+      })
+    })
+
+    it('is only offered for today', async () => {
+      givenDays([], yesterdayBreakfast)
+      renderToday('/?date=2026-10-21')
+      await screen.findByRole('heading', { name: 'Ayer' })
+      expect(screen.queryByRole('button', { name: 'Repetir lo de ayer' })).not.toBeInTheDocument()
     })
   })
 })

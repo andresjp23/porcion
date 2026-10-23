@@ -198,6 +198,9 @@ isOneToOne: false
             "can_edit_food":
 { Args: { "target_food_id": string }; Returns: boolean
                            },
+"copy_meal":
+{ Args: { "from_date": string,"m": Database["public"]['Enums']["meal_type"],"to_date": string }; Returns: number
+                           },
 "create_food":
 { Args: { "barcode"?: string,"basis": Database["public"]['Enums']["food_basis"],"brand"?: string,"carbs_100": number,"fat_100": number,"kcal_100": number,"name": string,"portions"?: Json,"protein_100": number }; Returns: string
                            },
