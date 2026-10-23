@@ -5,6 +5,7 @@
 
 import { z } from 'zod'
 import type { Nutrients } from '@/domain/nutrition'
+import { parseEnv } from './env'
 
 const OFF_PRODUCT_URL = 'https://world.openfoodfacts.org/api/v3/product'
 
@@ -18,10 +19,10 @@ const FIELDS = [
 ].join(',')
 
 /**
- * OFF asks every app to identify itself. Browsers do not let scripts set
- * User-Agent, so it goes in X-User-Agent, which OFF accepts in CORS.
+ * OFF asks every app to identify itself (VITE_OFF_USER_AGENT). Browsers do not
+ * let scripts set User-Agent, so it goes in X-User-Agent, which OFF accepts in CORS.
  */
-export const OFF_USER_AGENT = 'Porcion/0.1 (+https://github.com/andresjp23/porcion)'
+export const OFF_USER_AGENT = parseEnv(import.meta.env).VITE_OFF_USER_AGENT
 
 const KJ_PER_KCAL = 4.184
 const MAX_NAME_LENGTH = 120

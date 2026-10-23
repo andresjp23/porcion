@@ -4,6 +4,12 @@ import { z } from 'zod'
 const envSchema = z.object({
   VITE_SUPABASE_URL: z.url(),
   VITE_SUPABASE_ANON_KEY: z.string().min(1),
+  // Open Food Facts asks apps to identify themselves with a contact (design §4).
+  VITE_OFF_USER_AGENT: z
+    .string()
+    .trim()
+    .min(1)
+    .default('Porcion/0.1 (+https://github.com/andresjp23/porcion)'),
 })
 
 export function parseEnv(source: Record<string, unknown>) {
