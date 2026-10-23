@@ -38,7 +38,9 @@ describe('fetchOffProduct', () => {
     await fetchOffProduct('5449000000996')
     const [url, init] = fetchMock.mock.calls[0]!
     expect(url).toMatch(/^https:\/\/world\.openfoodfacts\.org\/api\/v3\/product\/5449000000996\?/)
-    expect(String(url)).toContain('fields=product_name,product_name_es,brands,nutriments')
+    expect(String(url)).toContain(
+      'fields=product_name,product_name_es,brands,nutriments,quantity,product_quantity_unit',
+    )
     expect(init?.headers).toEqual({ 'X-User-Agent': OFF_USER_AGENT })
   })
 
@@ -74,6 +76,16 @@ describe('fetchOffProduct', () => {
       servingGrams: null,
     })
     expect(result.status === 'found' && result.product.per100.kcal).toBeCloseTo(61, 1)
+  })
+
+  it('tells liquids apart by the package size when the unit field is missing', async () => {
+    respond(200, { product: { product_name: 'Jugo', quantity: '1,5 L', nutriments: {} } })
+    const result = await fetchOffProduct('7802900000003')
+    expect(result.status === 'found' && result.product.basis).toBe('ml')
+
+    respond(200, { product: { product_name: 'Galletas', quantity: '120 g', nutriments: {} } })
+    const solid = await fetchOffProduct('7802900000003')
+    expect(solid.status === 'found' && solid.product.basis).toBe('g')
   })
 
   it('treats odd values as missing instead of failing', async () => {

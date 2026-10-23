@@ -14,8 +14,12 @@ const FIELDS = [
   'product_name_es',
   'brands',
   'nutriments',
+  // OFF derives product_quantity_unit from quantity, and only sends it when
+  // quantity is asked for too.
+  'quantity',
   'product_quantity_unit',
   'serving_quantity',
+  'serving_quantity_unit',
 ].join(',')
 
 /**
@@ -48,8 +52,10 @@ const responseSchema = z.object({
     product_name: text,
     product_name_es: text,
     brands: text,
+    quantity: text,
     product_quantity_unit: text,
     serving_quantity: amount,
+    serving_quantity_unit: text,
     nutriments: z
       .object({
         'energy-kcal_100g': amount,
@@ -89,7 +95,14 @@ export function toOffProduct(product: z.infer<typeof responseSchema>['product'])
   const kcal =
     n['energy-kcal_100g'] ??
     (n['energy-kj_100g'] === undefined ? undefined : n['energy-kj_100g'] / KJ_PER_KCAL)
-  const unit = product.product_quantity_unit?.trim().toLowerCase()
+  // "330 ml", "1 L": the package size tells liquids apart.
+  const unit = (
+    product.product_quantity_unit ??
+    product.serving_quantity_unit ??
+    product.quantity?.match(/(ml|cl|l)\s*$/i)?.[1]
+  )
+    ?.trim()
+    .toLowerCase()
   const serving = product.serving_quantity
   return {
     name: clean(product.product_name_es || product.product_name, MAX_NAME_LENGTH),
