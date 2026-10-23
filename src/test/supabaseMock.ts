@@ -15,6 +15,8 @@ const query = {
   upsert: vi.fn(),
   delete: vi.fn(),
   eq: vi.fn(),
+  gte: vi.fn(),
+  lte: vi.fn(),
   is: vi.fn(),
   not: vi.fn(),
   order: vi.fn(),

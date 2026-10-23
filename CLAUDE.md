@@ -23,7 +23,7 @@ Si una tarea contradice la spec, se detiene y se pregunta. No se resuelve el con
 - **Backend:** Supabase (Postgres, Auth, Row Level Security). No hay servidor propio en el MVP.
 - **Validación:** Zod para formularios y para las respuestas de APIs externas
 - **Formularios:** React Hook Form + Zod (`@hookform/resolvers/zod`) en todos los formularios. El esquema Zod es la única fuente de validación, y las reglas de negocio que use (rangos, 4/4/9, macros) vienen de `src/domain/`. Los inputs se conectan con `register`, o con `Controller` en los componentes controlados (Stepper, Segmented). `@hookform/resolvers` se queda en la v5 hasta que la v6 resuelva su conflicto de dependencias opcionales en npm.
-- **Gráficos:** SVG propio o una librería liviana (decidir en la fase de Progreso, ver `docs/tasks.md`)
+- **Gráficos:** SVG propio, sin librería (decidido en G-2): son dos gráficos simples (puntos con línea de tendencia y 7 columnas con la meta) y así los colores salen de los tokens. Cada gráfico trae una tabla `sr-only` con sus datos.
 - **Escaneo:** API `BarcodeDetector` cuando exista y librería de respaldo para Safari (ver `docs/design.md`)
 - **Tests:** Vitest + Testing Library (unitarios y componentes), Playwright (flujos principales)
 - **Calidad:** ESLint 9 (typescript-eslint, react-hooks, jsx-a11y) y Prettier. ESLint se queda en la v9 hasta que `eslint-plugin-jsx-a11y` soporte la v10.
