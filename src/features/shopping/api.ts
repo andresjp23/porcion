@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
+import { pendingCodes } from '@/domain/shopping'
 import { supabase } from '@/lib/supabase'
 
 export type ShoppingItem = {
@@ -80,6 +81,7 @@ const LIST_COLUMNS =
 export const shoppingKeys = {
   active: ['shopping', 'active'] as const,
   history: ['shopping', 'history'] as const,
+  pending: ['shopping', 'pending'] as const,
 }
 
 /** HU-11: the user's active list, or null when there is none (CA3: one at a time). */
@@ -271,5 +273,36 @@ export function useRemoveItem() {
     }),
     onError: (_error, _id, context) => context?.rollback(),
     onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.active }),
+  })
+}
+
+const pendingRowSchema = z.object({
+  barcode: z.string(),
+  label: z.string(),
+  food_id: z.null(),
+  created_at: z.string(),
+})
+
+/** HU-12 CA5, "Por completar": the user's scanned codes that still have no food. */
+export function usePendingCodes() {
+  return useQuery({
+    queryKey: shoppingKeys.pending,
+    queryFn: async ({ signal }) => {
+      const { data, error } = await supabase
+        .from('shopping_list_items')
+        .select('barcode, label, food_id, created_at')
+        .is('food_id', null)
+        .not('barcode', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(200)
+        .abortSignal(signal)
+      if (error) throw error
+      return pendingCodes(
+        z
+          .array(pendingRowSchema)
+          .parse(data)
+          .map((row) => ({ ...row, foodId: row.food_id, createdAt: row.created_at })),
+      )
+    },
   })
 }

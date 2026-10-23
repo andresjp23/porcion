@@ -284,4 +284,35 @@ describe('AddFoodPage', () => {
       expect(link).toHaveAttribute('href', '/scan?meal=dinner&date=2026-10-20')
     }
   })
+
+  it('lists the scanned codes to complete in Mis alimentos (HU-12 CA5)', async () => {
+    setRpcDefault('my_foods', { data: [], error: null })
+    setTableDefault('shopping_list_items', {
+      data: [
+        {
+          barcode: '7801234567894',
+          label: 'Galletas',
+          food_id: null,
+          created_at: '2026-10-22T12:00:00Z',
+        },
+        {
+          barcode: '96385074',
+          label: 'Código 9638 5074',
+          food_id: null,
+          created_at: '2026-10-21T12:00:00Z',
+        },
+      ],
+      error: null,
+    })
+    renderPage('/add?meal=lunch&tab=mine')
+    const section = await screen.findByRole('region', { name: 'Por completar' })
+    expect(within(section).getByText('Código 780 1234 567894')).toBeInTheDocument()
+    expect(within(section).getByRole('link', { name: 'Completar Galletas' })).toHaveAttribute(
+      'href',
+      '/foods/new?meal=lunch&barcode=7801234567894&name=Galletas',
+    )
+    expect(
+      within(section).getByRole('link', { name: 'Completar Código 9638 5074' }),
+    ).toHaveAttribute('href', '/foods/new?meal=lunch&barcode=96385074')
+  })
 })

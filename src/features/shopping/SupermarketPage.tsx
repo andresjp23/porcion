@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { formatBarcode, type Barcode } from '@/domain/barcode'
 import { localDate } from '@/domain/dates'
-import { matchScan } from '@/domain/shopping'
+import { isCodeLabel, matchScan, summarizeSession } from '@/domain/shopping'
 import { foodDisplayName } from '@/features/foods/serving'
 import { useTimeZone } from '@/features/profile/useProfile'
 import { lookupBarcode } from '@/features/scanner/api'
@@ -21,6 +21,7 @@ import {
   scanIntoList,
   shoppingKeys,
   useActiveList,
+  useFinishList,
   type ScanIntoList,
   type ShoppingItem,
   type ShoppingList,
@@ -55,6 +56,7 @@ export function SupermarketPage() {
   // This visit only: what was scanned, newest first, and how many scans.
   const [sessionIds, setSessionIds] = useState<string[]>([])
   const [scanCount, setScanCount] = useState(0)
+  const [summaryOpen, setSummaryOpen] = useState(false)
 
   const save = useCallback(
     async (scan: PendingScan, claimItemId: string | null, claimLabel?: string) => {
@@ -127,7 +129,7 @@ export function SupermarketPage() {
 
   const { videoRef, status, retry } = useBarcodeScanner({
     onDetect: (barcode) => void onDetect(barcode),
-    paused: busy || typing || question !== null,
+    paused: busy || typing || summaryOpen || question !== null,
   })
 
   const list = active.data ?? null
@@ -209,10 +211,25 @@ export function SupermarketPage() {
       {list && <StillToFind list={list} />}
 
       <div className="fixed inset-x-0 bottom-0 bg-gradient-to-t from-bg via-bg to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <Button fullWidth className="mx-auto max-w-md" onClick={() => void navigate('/shopping')}>
+        <Button
+          fullWidth
+          className="mx-auto max-w-md"
+          onClick={() => (scanCount === 0 ? void navigate('/shopping') : setSummaryOpen(true))}
+        >
           Listo
         </Button>
       </div>
+
+      {list && (
+        <SummarySheet
+          open={summaryOpen}
+          list={list}
+          scanCount={scanCount}
+          items={sessionItems}
+          onKeepScanning={() => setSummaryOpen(false)}
+          onLeave={() => void navigate('/shopping')}
+        />
+      )}
 
       {question && list && (
         <WhichItemSheet
@@ -302,10 +319,7 @@ function SessionItems({ items }: { items: ShoppingItem[] }) {
             ) : (
               item.barcode && (
                 <Link
-                  to={`/foods/new?${new URLSearchParams({
-                    barcode: item.barcode,
-                    ...(item.label.startsWith('Código ') ? {} : { name: item.label }),
-                  }).toString()}`}
+                  to={completeHref(item.barcode, item.label)}
                   aria-label={`Completar ${item.label}`}
                   className={cx(buttonClasses({ size: 'md' }), 'shrink-0')}
                 >
@@ -333,6 +347,101 @@ function StillToFind({ list }: { list: ShoppingList }) {
 }
 
 /** HU-12 CA2: several items of the list fit the scanned product. */
+/** HU-12 CA4: Crear alimento with the code, and the name when the scan knew it. */
+function completeHref(barcode: string, label: string) {
+  const params = new URLSearchParams({ barcode })
+  if (!isCodeLabel(label)) params.set('name', label)
+  return `/foods/new?${params.toString()}`
+}
+
+/** HU-12 CA5: what the session left, before leaving the supermarket mode. */
+function SummarySheet({
+  open,
+  list,
+  scanCount,
+  items,
+  onKeepScanning,
+  onLeave,
+}: {
+  open: boolean
+  list: ShoppingList
+  scanCount: number
+  items: ShoppingItem[]
+  onKeepScanning: () => void
+  onLeave: () => void
+}) {
+  const finishList = useFinishList()
+  const summary = summarizeSession(scanCount, items)
+  const pending = items.filter((item) => item.foodId === null && item.barcode !== null)
+  const stats = [
+    { label: summary.scanned === 1 ? 'Escaneado' : 'Escaneados', value: summary.scanned },
+    { label: summary.completed === 1 ? 'Completado' : 'Completados', value: summary.completed },
+    { label: 'Por completar', value: summary.pending },
+  ]
+
+  return (
+    <Sheet open={open} onClose={onKeepScanning} title="Resumen de tu compra">
+      <div className="space-y-4">
+        <dl className="grid grid-cols-3 gap-2">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="flex flex-col-reverse rounded-card bg-surface p-3 text-center text-on-surface"
+            >
+              <dt className="text-sm font-bold text-on-surface-muted">{stat.label}</dt>
+              <dd className="text-3xl font-extrabold tabular-nums">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        {pending.length > 0 && (
+          <div className="space-y-2">
+            <p className="font-semibold text-ink-soft">
+              Los que no completes ahora quedan en Por completar, en Mis alimentos.
+            </p>
+            <ul className="space-y-2">
+              {pending.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex items-center justify-between gap-3 rounded-card bg-surface py-2 pr-2 pl-4 text-on-surface"
+                >
+                  <span className="truncate font-bold">{item.label}</span>
+                  <Link
+                    to={completeHref(item.barcode!, item.label)}
+                    aria-label={`Completar ${item.label}`}
+                    className={cx(buttonClasses({ size: 'md' }), 'shrink-0')}
+                  >
+                    Completar
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {finishList.isError && (
+          <p role="alert" className="font-bold text-ink">
+            No pudimos terminar la lista. Inténtalo de nuevo.
+          </p>
+        )}
+        <Button
+          fullWidth
+          disabled={finishList.isPending}
+          onClick={() => finishList.mutate(list.id, { onSuccess: onLeave })}
+        >
+          Terminar lista
+        </Button>
+        <Button fullWidth variant="secondary" onClick={onLeave}>
+          Dejarla para después
+        </Button>
+        <Button fullWidth variant="ghost" onClick={onKeepScanning}>
+          Seguir escaneando
+        </Button>
+      </div>
+    </Sheet>
+  )
+}
+
 function WhichItemSheet({
   label,
   items,

@@ -1,15 +1,15 @@
-import { ChevronRight, ScanBarcode, ShoppingCart } from 'lucide-react'
+import { ChevronRight, CircleDashed, ScanBarcode, ShoppingCart } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { listProgress } from '@/domain/shopping'
-import { useActiveList } from '@/features/shopping/api'
+import { useActiveList, usePendingCodes } from '@/features/shopping/api'
 import { cx } from '@/lib/cx'
 import { BottomNav } from '@/ui'
 import { focusRing, pressable } from '@/ui/styles'
 
 /**
- * Alimentos, the tab of the bottom bar (S-5b): the shopping list and the
- * supermarket mode. Por completar (S-7) joins them.
+ * Alimentos, the tab of the bottom bar (S-5b): the shopping list, the
+ * supermarket mode and, when there are any, the codes to complete (S-7).
  */
 export function FoodsPage() {
   return (
@@ -23,6 +23,7 @@ export function FoodsPage() {
           title="Modo supermercado"
           detail="Escanea lo que compras, con o sin lista"
         />
+        <PendingCard />
       </main>
       <BottomNav />
     </>
@@ -40,6 +41,25 @@ function ShoppingListCard() {
         : `${checked} de ${total} ${total === 1 ? 'marcado' : 'marcados'}`
   }
   return <NavCard to="/shopping" icon={<ShoppingCart />} title="Lista de compras" detail={detail} />
+}
+
+/** HU-12 CA5: only while there are scanned codes to complete. */
+function PendingCard() {
+  const pending = usePendingCodes()
+  const count = pending.data?.length ?? 0
+  if (count === 0) return null
+  return (
+    <NavCard
+      to="/add?tab=mine"
+      icon={<CircleDashed />}
+      title="Por completar"
+      detail={
+        count === 1
+          ? '1 producto sin tabla nutricional'
+          : `${count} productos sin tabla nutricional`
+      }
+    />
+  )
 }
 
 function NavCard({

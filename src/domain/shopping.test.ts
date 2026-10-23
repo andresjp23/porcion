@@ -1,4 +1,12 @@
-import { labelFits, listProgress, matchScan, type MatchableItem } from './shopping'
+import {
+  isCodeLabel,
+  labelFits,
+  listProgress,
+  matchScan,
+  pendingCodes,
+  summarizeSession,
+  type MatchableItem,
+} from './shopping'
 
 describe('listProgress', () => {
   it('counts the checked items', () => {
@@ -84,5 +92,46 @@ describe('matchScan', () => {
     expect(
       matchScan([item('a', 'leche')], { barcode: '7801234567894', foodId: null, name: null }),
     ).toEqual({ kind: 'none' })
+  })
+})
+
+describe('summarizeSession', () => {
+  it('counts scans, completed and pending products (HU-12 CA5)', () => {
+    expect(summarizeSession(5, [{ foodId: 'a' }, { foodId: null }, { foodId: 'b' }])).toEqual({
+      scanned: 5,
+      completed: 2,
+      pending: 1,
+    })
+  })
+})
+
+describe('pendingCodes', () => {
+  const row = (barcode: string | null, foodId: string | null, createdAt: string, label = 'x') => ({
+    barcode,
+    foodId,
+    createdAt,
+    label,
+  })
+
+  it('lists codes without a food, newest first and once each', () => {
+    expect(
+      pendingCodes([
+        row('111', null, '2026-10-20T10:00:00Z', 'Galletas viejo'),
+        row('222', 'food', '2026-10-21T10:00:00Z'),
+        row(null, null, '2026-10-22T10:00:00Z', 'leche'),
+        row('111', null, '2026-10-23T10:00:00Z', 'Galletas'),
+        row('333', null, '2026-10-22T10:00:00Z', 'Código 333'),
+      ]),
+    ).toEqual([
+      { barcode: '111', label: 'Galletas' },
+      { barcode: '333', label: 'Código 333' },
+    ])
+  })
+})
+
+describe('isCodeLabel', () => {
+  it('tells a code placeholder from a product name', () => {
+    expect(isCodeLabel('Código 780 1234 567894')).toBe(true)
+    expect(isCodeLabel('Galletas de avena')).toBe(false)
   })
 })

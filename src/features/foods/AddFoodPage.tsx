@@ -10,7 +10,10 @@ import {
 } from 'lucide-react'
 import { useCallback, useId, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
+import { formatBarcode } from '@/domain/barcode'
 import { nutrientsForGrams } from '@/domain/nutrition'
+import { isCodeLabel, type PendingCode } from '@/domain/shopping'
+import { usePendingCodes } from '@/features/shopping/api'
 import { useAddLog } from '@/features/today/api'
 import { useLogDate } from '@/features/today/useLogDate'
 import { cx } from '@/lib/cx'
@@ -57,6 +60,8 @@ type FoodActions = {
   createHref: (name?: string) => string
   /** Link to the scanner (HU-08), keeping the meal and the day. */
   scanHref: string
+  /** Crear alimento for a scanned code still without a food (HU-12 CA5). */
+  completeHref: (pending: PendingCode) => string
 }
 
 function parseTab(value: string | null): Tab {
@@ -124,6 +129,11 @@ export function AddFoodPage() {
     },
     createHref: (name) => `/foods/new?${linkParams(name ? { name } : {})}`,
     scanHref: `/scan?${linkParams()}`,
+    completeHref: (pending) =>
+      `/foods/new?${linkParams({
+        barcode: pending.barcode,
+        ...(isCodeLabel(pending.label) ? {} : { name: pending.label }),
+      })}`,
   }
 
   const term = query.trim()
@@ -365,17 +375,62 @@ function FavoritesTab({ actions }: { actions: FoodActions }) {
 function MyFoodsTab({ actions }: { actions: FoodActions }) {
   const mine = useMyFoods(true)
   return (
-    <ListState
-      query={mine}
-      actions={actions}
-      empty={
-        <EmptyState
-          icon={<UtensilsCrossed aria-hidden="true" />}
-          title="Aún no creas alimentos"
-          description="Los alimentos que crees aparecerán aquí."
-        />
-      }
-    />
+    <>
+      <PendingSection actions={actions} />
+      <ListState
+        query={mine}
+        actions={actions}
+        empty={
+          <EmptyState
+            icon={<UtensilsCrossed aria-hidden="true" />}
+            title="Aún no creas alimentos"
+            description="Los alimentos que crees aparecerán aquí."
+          />
+        }
+      />
+    </>
+  )
+}
+
+/** HU-12 CA5: codes scanned in the supermarket that still have no food. */
+function PendingSection({ actions }: { actions: FoodActions }) {
+  const pending = usePendingCodes()
+  if (!pending.data || pending.data.length === 0) return null
+  return (
+    <section aria-labelledby="pending-codes" className="space-y-2">
+      <div className="px-1">
+        <h2 id="pending-codes" className="text-lg font-extrabold">
+          Por completar
+        </h2>
+        <p className="font-semibold text-ink-soft">
+          Productos que escaneaste y no tienen tabla nutricional. Complétalos con la etiqueta.
+        </p>
+      </div>
+      <ul className="space-y-2">
+        {pending.data.map((code) => (
+          <li
+            key={code.barcode}
+            className="flex items-center justify-between gap-3 rounded-card border border-surface-2 bg-surface py-2 pr-2 pl-4 text-on-surface"
+          >
+            <span className="min-w-0">
+              <span className="block truncate font-bold">{code.label}</span>
+              {!isCodeLabel(code.label) && (
+                <span className="block text-sm font-semibold text-on-surface-muted tabular-nums">
+                  Código {formatBarcode(code.barcode)}
+                </span>
+              )}
+            </span>
+            <Link
+              to={actions.completeHref(code)}
+              aria-label={`Completar ${code.label}`}
+              className={cx(buttonClasses({ size: 'md' }), 'shrink-0')}
+            >
+              Completar
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

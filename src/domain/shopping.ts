@@ -87,3 +87,47 @@ export function matchScan(items: ReadonlyArray<MatchableItem>, product: ScannedP
     return { kind: 'ambiguous', itemIds: candidates.map((item) => item.id) }
   return { kind: 'none' }
 }
+
+export type SessionSummary = { scanned: number; completed: number; pending: number }
+
+/**
+ * HU-12 CA5: what a supermarket session left. `scans` counts every scan,
+ * repeats included; the items are the distinct products it touched.
+ */
+export function summarizeSession(
+  scans: number,
+  items: ReadonlyArray<{ foodId: string | null }>,
+): SessionSummary {
+  const pending = items.filter((item) => item.foodId === null).length
+  return { scanned: scans, completed: items.length - pending, pending }
+}
+
+export type PendingCode = { barcode: string; label: string }
+
+/**
+ * HU-12 CA5, "Por completar": scanned codes still without a food, newest
+ * first and once per code, though the same code may sit in several lists.
+ */
+export function pendingCodes(
+  items: ReadonlyArray<{
+    barcode: string | null
+    foodId: string | null
+    label: string
+    createdAt: string
+  }>,
+): PendingCode[] {
+  const seen = new Set<string>()
+  return [...items]
+    .filter((item) => item.barcode !== null && item.foodId === null)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .flatMap((item) => {
+      if (seen.has(item.barcode!)) return []
+      seen.add(item.barcode!)
+      return [{ barcode: item.barcode!, label: item.label }]
+    })
+}
+
+/** A pending item's label is the product name, unless it is only its code. */
+export function isCodeLabel(label: string) {
+  return label.startsWith('Código ')
+}

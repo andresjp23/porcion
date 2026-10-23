@@ -50,4 +50,23 @@ describe('FoodsPage', () => {
       await screen.findByRole('link', { name: /Anota lo que necesitas comprar/ }),
     ).toBeInTheDocument()
   })
+
+  it('shows how many codes are left to complete (HU-12 CA5)', async () => {
+    setTableDefault('shopping_lists', { data: null, error: null })
+    setTableDefault('shopping_list_items', {
+      data: [
+        {
+          barcode: '96385074',
+          label: 'Galletas',
+          food_id: null,
+          created_at: '2026-10-22T12:00:00Z',
+        },
+      ],
+      error: null,
+    })
+    renderPage()
+    expect(
+      await screen.findByRole('link', { name: /Por completar.*1 producto sin tabla nutricional/ }),
+    ).toHaveAttribute('href', '/add?tab=mine')
+  })
 })

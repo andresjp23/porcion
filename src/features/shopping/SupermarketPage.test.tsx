@@ -253,4 +253,63 @@ describe('SupermarketPage', () => {
     ).toBeInTheDocument()
     expect(scanner.paused).toBe(false)
   })
+
+  it('sums up the session and finishes the list (HU-12 CA5)', async () => {
+    setTableDefault('shopping_lists', {
+      data: list([
+        item({
+          id: 'i1',
+          barcode: '96385074',
+          food_id: MILK_ID,
+          food: milkFood,
+          checked_at: '2026-10-23T15:00:00Z',
+        }),
+        item({
+          id: 'i3',
+          label: 'Galletas',
+          barcode: '7801234567894',
+          source: 'scan',
+          checked_at: '2026-10-23T15:00:00Z',
+        }),
+      ]),
+      error: null,
+    })
+    queueQueryResult('foods', {
+      data: { id: MILK_ID, name: 'Leche Entera', brand: 'Soprole' },
+      error: null,
+    })
+    fetchOffProduct.mockResolvedValue({ status: 'not_found' })
+    queueRpcResult(
+      'scan_into_list',
+      { data: { item_id: 'i1', outcome: 'repeat' }, error: null },
+      { data: { item_id: 'i3', outcome: 'repeat' }, error: null },
+    )
+    renderPage()
+    await screen.findByText('Apunta al código de barras')
+    await scan('96385074')
+    await scan('7801234567894')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Listo' }))
+    const sheet = screen.getByRole('dialog', { name: 'Resumen de tu compra' })
+    expect(scanner.paused).toBe(true)
+    const stats = within(sheet)
+      .getAllByRole('definition')
+      .map((el) => el.textContent)
+    expect(stats).toEqual(['2', '1', '1'])
+    expect(within(sheet).getByRole('link', { name: 'Completar Galletas' })).toHaveAttribute(
+      'href',
+      '/foods/new?barcode=7801234567894&name=Galletas',
+    )
+
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Terminar lista' }))
+    expect(mock.query.update).toHaveBeenCalledWith({ status: 'archived' })
+  })
+
+  it('leaves without a summary when nothing was scanned', async () => {
+    setTableDefault('shopping_lists', { data: list([]), error: null })
+    renderPage()
+    await screen.findByText('Apunta al código de barras')
+    await userEvent.click(screen.getByRole('button', { name: 'Listo' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
 })

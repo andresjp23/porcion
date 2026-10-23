@@ -296,6 +296,8 @@ export function useCreateFood() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: foodKeys.mine })
+      // A trigger links the scanned items with this code (S-4): Por completar changes.
+      void queryClient.invalidateQueries({ queryKey: ['shopping'] })
     },
   })
 }
