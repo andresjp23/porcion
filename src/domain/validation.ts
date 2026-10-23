@@ -26,6 +26,23 @@ export function checkAtwater(nutrients: Nutrients): AtwaterCheck {
   return { estimatedKcal, difference, isConsistent: Math.abs(difference) <= tolerance }
 }
 
+/**
+ * Imports from Open Food Facts (R-10) use a looser 4/4/9 check, only to turn
+ * away clearly broken data: the larger of 50 kcal and 30 %. Mirrored by the
+ * `import_off_product` RPC.
+ */
+export const IMPORT_TOLERANCE_KCAL = 50
+export const IMPORT_TOLERANCE_SHARE = 0.3
+
+/** Whether OFF values are good enough to import as they are (R-10). */
+export function isImportable(per100: Nutrients) {
+  if (nutrientIssues(per100).length > 0) return false
+  const { difference } = checkAtwater(per100)
+  return (
+    Math.abs(difference) <= Math.max(IMPORT_TOLERANCE_KCAL, per100.kcal * IMPORT_TOLERANCE_SHARE)
+  )
+}
+
 export type NutrientField = keyof Nutrients
 
 export type NutrientIssue =

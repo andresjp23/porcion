@@ -1,5 +1,5 @@
 import type { Nutrients } from './nutrition'
-import { checkAtwater, nutrientIssues } from './validation'
+import { checkAtwater, isImportable, nutrientIssues } from './validation'
 
 // Leche entera, per 100 ml
 const milk: Nutrients = { kcal: 61, protein: 3.2, carbs: 4.7, fat: 3.3 }
@@ -52,5 +52,25 @@ describe('nutrientIssues', () => {
     expect(nutrientIssues({ kcal: 500, protein: 40, carbs: 50, fat: 20 })).toEqual([
       { field: 'macros', code: 'macros_over_100' },
     ])
+  })
+})
+
+describe('isImportable', () => {
+  it('accepts label data that R-07 would only warn about', () => {
+    // estimated 400; 30 % of 320 is 96, so 80 off is still importable
+    expect(isImportable({ kcal: 320, protein: 0, carbs: 100, fat: 0 })).toBe(true)
+    expect(isImportable(milk)).toBe(true)
+  })
+
+  it('allows up to 50 kcal on low-calorie foods', () => {
+    expect(isImportable({ kcal: 50, protein: 0, carbs: 0, fat: 0 })).toBe(true)
+    expect(isImportable({ kcal: 51, protein: 0, carbs: 0, fat: 0 })).toBe(false)
+  })
+
+  it('turns away clearly broken values', () => {
+    // kJ entered as kcal: 1500 declared, 400 estimated
+    expect(isImportable({ kcal: 1500, protein: 0, carbs: 100, fat: 0 })).toBe(false)
+    expect(isImportable({ kcal: 100, protein: 10, carbs: 30, fat: 10 })).toBe(false)
+    expect(isImportable({ kcal: 400, protein: 60, carbs: 60, fat: 0 })).toBe(false)
   })
 })

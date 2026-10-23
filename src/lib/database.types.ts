@@ -238,6 +238,9 @@ isOneToOne: false
 "has_consented":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"import_off_product":
+{ Args: { "barcode": string,"basis": Database["public"]['Enums']["food_basis"],"brand"?: string,"carbs_100": number,"fat_100": number,"kcal_100": number,"name": string,"protein_100": number,"serving_grams"?: number }; Returns: string
+                           },
 "is_my_food":
 { Args: { "target_food_id": string }; Returns: boolean
                            },
