@@ -22,6 +22,7 @@ import { formatKcal, formatKg } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import { BottomNav, Button, buttonClasses, Card, Toast } from '@/ui'
 import { focusRing, pressable } from '@/ui/styles'
+import { PrivacyCard } from './PrivacyCard'
 import { savedTargetFrom, targetColumns, useUpdateProfile } from './api'
 import { useProfile } from './useProfile'
 
@@ -30,7 +31,7 @@ const SAVE_ERROR = 'No pudimos guardar tu meta. Revisa tu conexión e inténtalo
 const titleOf = <T extends string>(options: ReadonlyArray<{ value: T; title: string }>, value: T) =>
   options.find((option) => option.value === value)?.title ?? value
 
-/** Perfil (HU-15): the daily target, the data it comes from, and signing out. */
+/** Perfil (HU-15, HU-16): the daily target, the data it comes from, privacy, and signing out. */
 export function ProfilePage() {
   const auth = useAuth()
   const userId = auth.session?.user.id
@@ -68,6 +69,8 @@ export function ProfilePage() {
             </Button>
           </div>
         )}
+
+        {profile.data && <PrivacyCard timeZone={profile.data.timezone} onExported={setNotice} />}
 
         <Button
           variant="ghost"

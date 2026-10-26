@@ -2,7 +2,12 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Tables } from '@/lib/database.types'
 import { renderWithAuth, resetSupabaseMock, signedInSession } from '@/test/renderWithAuth'
-import { supabase as mock, queueQueryResult, setTableDefault } from '@/test/supabaseMock'
+import {
+  supabase as mock,
+  queueQueryResult,
+  queueRpcResult,
+  setTableDefault,
+} from '@/test/supabaseMock'
 import { ProfileDataPage } from './ProfileDataPage'
 import { ProfilePage } from './ProfilePage'
 
@@ -159,6 +164,32 @@ describe('ProfilePage', () => {
     queueQueryResult('profiles', { data: null, error: { message: 'offline' } })
     await userEvent.click(button)
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos guardar tu meta')
+  })
+
+  it('downloads the own data as JSON (HU-16 CA1)', async () => {
+    const createObjectURL = vi.fn<(blob: Blob) => string>(() => 'blob:export')
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }))
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    renderProfile()
+    queueRpcResult('export_my_data', { data: { profile: { goal: 'lose' } }, error: null })
+    await userEvent.click(await screen.findByRole('button', { name: 'Descargar mis datos' }))
+
+    expect(mock.rpc).toHaveBeenCalledWith('export_my_data')
+    expect(await screen.findByText('Descargamos tus datos')).toBeInTheDocument()
+    const link = click.mock.contexts[0] as HTMLAnchorElement
+    expect(link.download).toBe('porcion-mis-datos-2026-10-22.json')
+    expect(JSON.parse(await createObjectURL.mock.calls[0]![0].text())).toEqual({
+      profile: { goal: 'lose' },
+    })
+    click.mockRestore()
+    vi.unstubAllGlobals()
+  })
+
+  it('says so when the export fails', async () => {
+    renderProfile()
+    queueRpcResult('export_my_data', { data: null, error: { message: 'offline' } })
+    await userEvent.click(await screen.findByRole('button', { name: 'Descargar mis datos' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos preparar tus datos')
   })
 
   it('signs out', async () => {

@@ -255,6 +255,9 @@ isOneToOne: false
               "carbs": number,"entries": number,"fat": number,"kcal": number,"meal": Database["public"]['Enums']["meal_type"],"protein": number
             }[]
                            },
+"export_my_data":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "favorite_foods":
 { Args: Record<PropertyKey, never>; Returns: {
               "basis": Database["public"]['Enums']["food_basis"] | null,

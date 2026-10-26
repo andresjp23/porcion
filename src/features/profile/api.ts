@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { SavedTarget } from '@/domain/target'
 import { updateProfile } from '@/features/onboarding/api'
 import type { Tables, TablesUpdate } from '@/lib/database.types'
+import { supabase } from '@/lib/supabase'
 import { profileKey } from './useProfile'
 
 /** The stored target, or null while the onboarding has not set one. */
@@ -42,4 +43,11 @@ export function useUpdateProfile(userId: string) {
     mutationFn: (values: TablesUpdate<'profiles'>) => updateProfile(userId, values),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: profileKey(userId) }),
   })
+}
+
+/** HU-16 CA1: everything stored about the user, as the RPC builds it. */
+export async function exportMyData() {
+  const { data, error } = await supabase.rpc('export_my_data')
+  if (error) throw error
+  return data
 }
