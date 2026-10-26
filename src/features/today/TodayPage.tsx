@@ -78,6 +78,8 @@ export function TodayPage() {
         date,
         meal: entry.meal,
         foodId: entry.foodId,
+        // Back in its batch too, so it counts against it again.
+        mealPrepId: entry.mealPrepId,
         portionId: entry.portionId,
         quantity: entry.quantity,
         grams: entry.grams,

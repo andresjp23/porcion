@@ -27,6 +27,7 @@ function log(meal: string, food_name: string, kcal: number, macros = [10, 20, 5]
   return {
     id: `log-${nextId}`,
     food_id: `food-${food_name}`,
+    meal_prep_id: null,
     meal,
     portion_id: null,
     quantity: 100,
@@ -266,6 +267,33 @@ describe('TodayPage', () => {
       const sheet = await screen.findByRole('dialog', { name: 'Marraqueta' })
       expect(within(sheet).getByLabelText('Gramos')).toHaveValue('100')
       expect(within(sheet).queryByRole('group', { name: 'Porción' })).not.toBeInTheDocument()
+    })
+
+    it('edits a meal prep serving in cooked grams, and Deshacer keeps its batch (HU-18 CA3)', async () => {
+      given([
+        {
+          ...log('lunch', 'Pollo a la plancha', 222, [46, 0, 4.4]),
+          id: 'log-prep',
+          food_id: null,
+          meal_prep_id: 'prep-1',
+          quantity: 150,
+          grams: 150,
+        },
+      ])
+      renderToday()
+      const lunch = await screen.findByRole('region', { name: 'Almuerzo' })
+      await userEvent.click(within(lunch).getByRole('button', { expanded: false }))
+      await userEvent.click(within(lunch).getByRole('button', { name: /^Pollo a la plancha/ }))
+      const sheet = await screen.findByRole('dialog', { name: 'Pollo a la plancha' })
+      expect(within(sheet).getByLabelText('Gramos')).toHaveValue('150')
+
+      await userEvent.click(within(sheet).getByRole('button', { name: 'Eliminar' }))
+      await userEvent.click(
+        within(screen.getByRole('status')).getByRole('button', { name: 'Deshacer' }),
+      )
+      expect(mock.query.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'log-prep', meal_prep_id: 'prep-1', grams: 150 }),
+      )
     })
   })
 

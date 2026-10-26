@@ -13,6 +13,9 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { formatBarcode } from '@/domain/barcode'
 import { nutrientsForGrams } from '@/domain/nutrition'
 import { isCodeLabel, type PendingCode } from '@/domain/shopping'
+import { ActiveMealPreps } from '@/features/mealPrep/ActiveMealPreps'
+import type { MealPrepRecord } from '@/features/mealPrep/api'
+import { LogMealPrepSheet } from '@/features/mealPrep/LogMealPrepSheet'
 import { usePendingCodes } from '@/features/shopping/api'
 import { useAddLog } from '@/features/today/api'
 import { useLogDate } from '@/features/today/useLogDate'
@@ -92,7 +95,8 @@ export function AddFoodPage() {
   }
 
   const goBack = useGoBack()
-  const { date, isToday } = useLogDate()
+  const { date, today, isToday } = useLogDate()
+  const [loggingPrep, setLoggingPrep] = useState<MealPrepRecord | null>(null)
   const addLog = useAddLog()
   const [notice, setNotice] = useState<string | null>(null)
   const dismissNotice = useCallback(() => setNotice(null), [])
@@ -177,6 +181,8 @@ export function AddFoodPage() {
 
       {term === '' ? (
         <>
+          {/* Under the search, not above it: the field stays put when typing starts. */}
+          <ActiveMealPreps today={today} onPick={setLoggingPrep} />
           <Segmented
             label="Listas de alimentos"
             tone="subtle"
@@ -193,6 +199,15 @@ export function AddFoodPage() {
       )}
 
       {notice && <Toast message={notice} onDismiss={dismissNotice} />}
+
+      <LogMealPrepSheet
+        prep={loggingPrep}
+        date={date}
+        meal={meal}
+        mealLabel={mealLabel}
+        onClose={() => setLoggingPrep(null)}
+        onLogged={() => void navigate(isToday ? '/' : `/?date=${date}`, { replace: true })}
+      />
 
       {/* Always in sight: scanning (HU-08) and, for a food missing from the
           base, creating it (HU-09). */}

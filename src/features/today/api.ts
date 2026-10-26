@@ -3,12 +3,15 @@ import { z } from 'zod'
 import type { Meal } from '@/domain/meal'
 import type { Nutrients } from '@/domain/nutrition'
 import { foodKeys } from '@/features/foods/api'
+import { mealPrepKeys } from '@/features/mealPrep/api'
 import { supabase } from '@/lib/supabase'
 
 /** One logged food, with the snapshot of its nutrients (R-02). */
 export type LogEntry = {
   id: string
   foodId: string | null
+  /** The meal prep it came from (HU-18); optional so fixtures can leave it out. */
+  mealPrepId?: string | null
   meal: Meal
   portionId: string | null
   quantity: number
@@ -22,6 +25,7 @@ const logEntrySchema = z
   .object({
     id: z.string(),
     food_id: z.string().nullable(),
+    meal_prep_id: z.string().nullable(),
     meal: z.enum(['breakfast', 'lunch', 'snack', 'dinner']),
     portion_id: z.string().nullable(),
     quantity: z.number(),
@@ -36,6 +40,7 @@ const logEntrySchema = z
   .transform((row): LogEntry => ({
     id: row.id,
     foodId: row.food_id,
+    mealPrepId: row.meal_prep_id,
     meal: row.meal,
     portionId: row.portion_id,
     quantity: row.quantity,
@@ -60,7 +65,7 @@ export function useDayLogs(date: string, enabled = true) {
       const { data, error } = await supabase
         .from('food_logs')
         .select(
-          'id, food_id, meal, portion_id, quantity, grams, food_name, kcal, protein, carbs, fat, created_at',
+          'id, food_id, meal_prep_id, meal, portion_id, quantity, grams, food_name, kcal, protein, carbs, fat, created_at',
         )
         .eq('log_date', date)
         .order('created_at')
@@ -76,6 +81,8 @@ export type NewLog = {
   meal: Meal
   /** Null only when Deshacer restores a log whose food was deleted since. */
   foodId: string | null
+  /** A serving of a meal prep (HU-18): its grams count against the batch. */
+  mealPrepId?: string | null
   /** Null when logging plain grams. */
   portionId: string | null
   /** Number of portions, or grams when there is no portion. */
@@ -120,6 +127,7 @@ export function useAddLog() {
       const { error } = await supabase.from('food_logs').insert({
         id: log.id,
         food_id: log.foodId,
+        meal_prep_id: log.mealPrepId ?? null,
         log_date: log.date,
         meal: log.meal,
         portion_id: log.portionId,
@@ -138,6 +146,7 @@ export function useAddLog() {
       const entry: LogEntry = {
         id: log.id,
         foodId: log.foodId,
+        mealPrepId: log.mealPrepId ?? null,
         meal: log.meal,
         portionId: log.portionId,
         quantity: log.quantity,
@@ -157,6 +166,7 @@ export function useAddLog() {
       void queryClient.invalidateQueries({ queryKey: logRangeKey })
       void queryClient.invalidateQueries({ queryKey: foodKeys.recent })
       void queryClient.invalidateQueries({ queryKey: hasLoggedKey })
+      if (log.mealPrepId) void queryClient.invalidateQueries({ queryKey: mealPrepKeys.all })
     },
   })
 }
@@ -192,6 +202,8 @@ export function useUpdateLog(date: string) {
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: dayKey(date) })
       void queryClient.invalidateQueries({ queryKey: logRangeKey })
+      // Grams changed: what is left of its batch did too (HU-18 CA3).
+      void queryClient.invalidateQueries({ queryKey: mealPrepKeys.all })
     },
   })
 }
@@ -210,10 +222,11 @@ export function useDeleteLog(date: string) {
       ),
     }),
     onError: (_error, _entry, context) => context?.rollback(),
-    onSettled: () => {
+    onSettled: (_data, _error, entry) => {
       void queryClient.invalidateQueries({ queryKey: dayKey(date) })
       void queryClient.invalidateQueries({ queryKey: logRangeKey })
       void queryClient.invalidateQueries({ queryKey: foodKeys.recent })
+      if (entry.mealPrepId) void queryClient.invalidateQueries({ queryKey: mealPrepKeys.all })
     },
   })
 }
@@ -236,6 +249,8 @@ export function useCopyMeal(date: string) {
       void queryClient.invalidateQueries({ queryKey: logRangeKey })
       void queryClient.invalidateQueries({ queryKey: foodKeys.recent })
       void queryClient.invalidateQueries({ queryKey: hasLoggedKey })
+      // HU-18 CA5: a copied serving of a batch counts against it.
+      void queryClient.invalidateQueries({ queryKey: mealPrepKeys.all })
     },
   })
 }
