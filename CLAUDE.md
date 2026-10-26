@@ -40,7 +40,7 @@ npm run preview       # sirve el build
 npm run test          # Vitest (una pasada)
 npm run test:watch    # Vitest en modo watch
 npm run test:coverage # Vitest con cobertura; exige 90 % en src/domain/ (también en CI)
-npm run test:e2e      # Playwright (pendiente, Q-1)
+npm run test:e2e      # Playwright contra el Supabase local (necesita supabase start)
 npm run lint          # ESLint
 npm run typecheck     # tsc -b --noEmit
 npm run format        # Prettier (no formatea los .md)

@@ -40,3 +40,38 @@ jobs:
       - name: Start database only
         run: supabase db start
       - run: supabase test db
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    env:
+      # config.toml reads these; Google sign-in is not part of the E2E flows.
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID: e2e
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET: e2e
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_REDIRECT_URI: http://127.0.0.1:54321/auth/v1/callback
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start Supabase (database, Auth and API only)
+        run: supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta
+      - name: Point the app at it
+        run: |
+          eval "$(supabase status -o env)"
+          echo "VITE_SUPABASE_URL=$API_URL" >> .env.local
+          echo "VITE_SUPABASE_ANON_KEY=$ANON_KEY" >> .env.local
+          echo "VITE_OFF_USER_AGENT=Porcion/0.1 (ci)" >> .env.local
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
