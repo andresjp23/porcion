@@ -69,6 +69,15 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
     css: false,
+    // Q-0: business rules carry the 90 % bar (docs/spec.md §7). Run with
+    // `npm run test:coverage`; the plain `test` stays fast.
+    coverage: {
+      provider: 'v8',
+      include: ['src/domain/**/*.ts'],
+      exclude: ['src/domain/**/*.test.ts'],
+      reporter: ['text', 'html'],
+      thresholds: { lines: 90, functions: 90, branches: 90, statements: 90 },
+    },
     // Placeholder values so src/lib/supabase.ts can load; tests mock its calls.
     env: {
       VITE_SUPABASE_URL: 'http://127.0.0.1:54321',
