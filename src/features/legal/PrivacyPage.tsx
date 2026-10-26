@@ -70,8 +70,8 @@ export function PrivacyPage() {
         <h2>Con quién se comparten</h2>
         <ul>
           <li>
-            <strong>Supabase</strong> aloja la base de datos y las cuentas. Región:{' '}
-            <strong>[por definir al desplegar]</strong>.
+            <strong>Supabase</strong> aloja la base de datos y las cuentas, en São Paulo (Brasil).{' '}
+            <strong>Vercel</strong> sirve la app.
           </li>
           <li>
             <strong>Google</strong>, solo si eliges ingresar con tu cuenta de Google.

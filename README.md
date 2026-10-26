@@ -2,7 +2,7 @@
 
 Registra lo que comes, tus calorías y macros, y sigue tu peso. Una PWA pensada para el celular, con alimentos chilenos, escaneo de código de barras y un modo supermercado.
 
-**Demo en vivo:** _pronto (en despliegue)_ · Cuenta de prueba: `demo@porcion.app` / `porcion-demo`
+**Demo en vivo: [porcion.vercel.app](https://porcion.vercel.app)** · Cuenta de prueba: `demo@porcion.app` / `porcion-demo`
 
 <p align="center">
   <img src=".github/readme/registrar.gif" width="300" alt="Registrar una comida en dos toques desde Hoy: se abre Agregar, se toca el + de Marraqueta y Hoy suma sus calorías">
@@ -27,9 +27,9 @@ Registra lo que comes, tus calorías y macros, y sigue tu peso. Una PWA pensada 
 
 | | |
 |---|---|
-| Frontend | React 19, TypeScript estricto, Vite, Tailwind CSS v4, React Router, TanStack Query |
+| Frontend | Vercel · React 19, TypeScript estricto, Vite, Tailwind CSS v4, React Router, TanStack Query |
 | Formularios | React Hook Form + Zod, con las reglas de negocio en `src/domain/` |
-| Backend | Supabase: Postgres con Row Level Security, Auth (correo y Google), funciones RPC y una Edge Function |
+| Backend | Supabase (São Paulo): Postgres con Row Level Security, Auth (correo y Google), funciones RPC y una Edge Function |
 | PWA | `vite-plugin-pwa` (Workbox) y caché de TanStack Query persistida por usuario |
 | Escaneo | `BarcodeDetector` nativo, con un respaldo WASM para Safari (`barcode-detector`) |
 | Tests | Vitest + Testing Library, pgTAP para la base y Playwright + axe para los flujos y la accesibilidad |
