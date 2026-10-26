@@ -46,6 +46,14 @@ export const goalSchema = z.object({
   goal: z.enum(['lose', 'maintain', 'gain'], CHOOSE_ONE),
 })
 
+/** Perfil (HU-15 CA1): the onboarding answers of steps 1–4, minus the weight (Progreso). */
+export function profileDataSchema(today: string) {
+  return sexAndBirthSchema(today)
+    .extend(bodySchema.pick({ heightCm: true }).shape)
+    .extend(activitySchema.shape)
+    .extend(goalSchema.shape)
+}
+
 /** Whole numbers only, as typed in a text input. */
 function integer(min: number, max: number, message: string) {
   return z

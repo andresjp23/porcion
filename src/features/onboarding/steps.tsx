@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowDown, ArrowUp, Equal } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import type { z } from 'zod'
@@ -7,8 +6,9 @@ import { localDate } from '@/domain/dates'
 import type { Tables } from '@/lib/database.types'
 import { Card } from '@/ui/Card'
 import { Input } from '@/ui/Input'
-import { OptionCards, type OptionCard } from '@/ui/OptionCards'
+import { OptionCards } from '@/ui/OptionCards'
 import { saveWeightForToday, updateProfile } from './api'
+import { activityOptions, goalOptions, sexOptions } from './options'
 import { activitySchema, bodySchema, goalSchema, sexAndBirthSchema } from './schemas'
 import { StepLayout } from './StepLayout'
 
@@ -77,10 +77,7 @@ export function SexAndBirthStep({ profile, onBack, onSaved }: StepProps) {
         render={({ field }) => (
           <OptionCards
             label="Sexo para el cálculo"
-            options={[
-              { value: 'female', title: 'Mujer' },
-              { value: 'male', title: 'Hombre' },
-            ]}
+            options={sexOptions}
             value={field.value}
             onChange={field.onChange}
             error={errors.sex?.message}
@@ -152,14 +149,6 @@ export function BodyStep({ profile, latestWeightKg, onBack, onSaved }: StepProps
   )
 }
 
-const activityOptions: ReadonlyArray<OptionCard<z.output<typeof activitySchema>['activity']>> = [
-  { value: 'sedentary', title: 'Sedentario', description: 'Poco o nada de ejercicio' },
-  { value: 'light', title: 'Ligero', description: 'Ejercicio 1 a 3 días por semana' },
-  { value: 'moderate', title: 'Moderado', description: 'Ejercicio 3 a 5 días por semana' },
-  { value: 'high', title: 'Alto', description: 'Ejercicio 6 a 7 días por semana' },
-  { value: 'very_high', title: 'Muy alto', description: 'Trabajo físico y además entrenas' },
-]
-
 export function ActivityStep({ profile, onBack, onSaved }: StepProps) {
   const { error, save } = useSave(onSaved)
   const {
@@ -201,27 +190,6 @@ export function ActivityStep({ profile, onBack, onSaved }: StepProps) {
     </StepLayout>
   )
 }
-
-const goalOptions: ReadonlyArray<OptionCard<z.output<typeof goalSchema>['goal']>> = [
-  {
-    value: 'lose',
-    title: 'Bajar de peso',
-    description: 'Déficit moderado, ≈ 0,5 kg por semana',
-    icon: <ArrowDown className="size-6" />,
-  },
-  {
-    value: 'maintain',
-    title: 'Mantener mi peso',
-    description: 'Comer lo que gastas',
-    icon: <Equal className="size-6" />,
-  },
-  {
-    value: 'gain',
-    title: 'Subir de peso',
-    description: 'Superávit moderado, ≈ 0,25 kg por semana',
-    icon: <ArrowUp className="size-6" />,
-  },
-]
 
 export function GoalStep({ profile, onBack, onSaved }: StepProps) {
   const { error, save } = useSave(onSaved)

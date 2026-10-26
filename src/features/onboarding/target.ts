@@ -1,5 +1,6 @@
 import { ageInYears, type TargetInput } from '@/domain/energy'
 import { suggestedMacros, type Macros } from '@/domain/macros'
+import type { SavedTarget } from '@/domain/target'
 import type { Tables } from '@/lib/database.types'
 
 /** The data for R-03/R-04 from the saved answers, or null if any is missing. */
@@ -22,11 +23,7 @@ export function targetInputFrom(
   }
 }
 
-export type DailyTarget = Macros & {
-  kcal: number
-  kcalIsManual: boolean
-  macrosAreManual: boolean
-}
+export type DailyTarget = SavedTarget
 
 /**
  * R-13: the kcal target is manual when it differs from the suggestion, and the
