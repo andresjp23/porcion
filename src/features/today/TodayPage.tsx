@@ -248,23 +248,32 @@ function DayPicker({
 
 function SummaryCard({ consumed, targets }: { consumed: Nutrients; targets: Targets }) {
   const balance = dayBalance(consumed.kcal, targets.kcal)
+  const shown = formatKcal(balance.status === 'under' ? balance.remaining : balance.over)
 
   return (
     <Card radius="lg" className="space-y-6">
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-4">
         <Ring
           progress={targets.kcal > 0 ? consumed.kcal / targets.kcal : 0}
           label={`${formatKcal(consumed.kcal)} de ${formatKcal(targets.kcal)} kcal`}
+          size={148}
+          strokeWidth={12}
         >
-          <span className="text-4xl font-extrabold tabular-nums">
-            {formatKcal(balance.status === 'under' ? balance.remaining : balance.over)}
+          {/* "1.240" needs a smaller size than "913" to stay inside the ring. */}
+          <span
+            className={cx(
+              'leading-none font-extrabold tabular-nums',
+              shown.length > 3 ? 'text-3xl' : 'text-4xl',
+            )}
+          >
+            {shown}
           </span>
           {/* R-08: neutral wording past the target, never red. */}
-          <span className="text-sm font-bold text-on-surface-muted">
+          <span className="mt-1 max-w-24 text-sm leading-tight font-bold text-on-surface-muted">
             {balance.status === 'under' ? 'restantes' : 'sobre la meta'}
           </span>
         </Ring>
-        <dl className="space-y-3">
+        <dl className="min-w-0 space-y-3">
           <div>
             <dt className="text-sm font-bold text-on-surface-muted">Consumidas</dt>
             <dd className="text-on-surface-muted">

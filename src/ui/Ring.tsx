@@ -50,7 +50,10 @@ export function Ring({ progress, label, size = 136, strokeWidth = 14, children }
         />
       </svg>
       {children && (
-        <div className="absolute inset-0 grid place-items-center text-center">{children}</div>
+        // One centered column, so a number and its label stay together.
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          {children}
+        </div>
       )}
     </div>
   )
