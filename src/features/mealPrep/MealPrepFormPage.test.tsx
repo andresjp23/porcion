@@ -1,7 +1,13 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useLocation } from 'react-router'
 import { renderWithAuth, resetSupabaseMock, signedInSession } from '@/test/renderWithAuth'
-import { supabase as mock, queueRpcResult, setRpcDefault } from '@/test/supabaseMock'
+import {
+  supabase as mock,
+  queueRpcResult,
+  setRpcDefault,
+  setTableDefault,
+} from '@/test/supabaseMock'
 import { EditMealPrepPage, NewMealPrepPage } from './MealPrepFormPage'
 
 vi.mock('@/lib/supabase', () => import('@/test/supabaseMock'))
@@ -25,6 +31,11 @@ const food = (id: string, name: string, kcal: number, protein: number, fat: numb
   default_portion_grams: null,
 })
 
+function Where() {
+  const location = useLocation()
+  return <p>En {location.pathname + location.search}</p>
+}
+
 const chicken = food('food-chicken', 'Pechuga de pollo cruda', 110, 23, 1.5)
 const oil = food('food-oil', 'Aceite vegetal', 884, 0, 100)
 
@@ -34,6 +45,7 @@ function renderPage(path: string) {
       { path: '/meal-prep/new', element: <NewMealPrepPage /> },
       { path: '/meal-prep/:id/edit', element: <EditMealPrepPage /> },
       { path: '/meal-prep/:id', element: <p>Detalle del meal prep</p> },
+      { path: '/scan', element: <Where /> },
     ],
     { path, session: signedInSession },
   )
@@ -166,6 +178,61 @@ describe('NewMealPrepPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Guardar meal prep' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos guardar tu meal prep')
     expect(screen.getByLabelText('Nombre')).toHaveValue('Pollo')
+  })
+})
+
+describe('scanning an ingredient (MP-3b)', () => {
+  const TRAY_ID = '33333333-3333-4333-8333-333333333333'
+
+  beforeEach(() => {
+    resetSupabaseMock()
+    sessionStorage.clear()
+    setRpcDefault('recent_foods', { data: [], error: null })
+  })
+
+  it('keeps what was typed while scanning, and adds the scanned food', async () => {
+    renderPage('/meal-prep/new')
+    await userEvent.type(screen.getByLabelText('Nombre'), 'Pollo para la semana')
+    await userEvent.type(screen.getByLabelText('Porciones'), '5')
+    await userEvent.click(screen.getByRole('button', { name: 'Escanear ingrediente' }))
+    expect(await screen.findByText('En /scan?return=%2Fmeal-prep%2Fnew')).toBeInTheDocument()
+  })
+
+  it('comes back with the draft and the food, ready for its grams', async () => {
+    sessionStorage.setItem(
+      'porcion-meal-prep-draft:/meal-prep/new',
+      JSON.stringify({
+        name: 'Pollo para la semana',
+        ingredients: [],
+        cookedGrams: '',
+        servings: '5',
+      }),
+    )
+    setTableDefault('foods', {
+      data: {
+        id: TRAY_ID,
+        name: 'Pechuga deshuesada',
+        brand: 'Super Pollo',
+        basis: 'g',
+        kcal_100: 106,
+        protein_100: 22.5,
+        carbs_100: 0,
+        fat_100: 1.8,
+        source: 'off',
+        verified: false,
+        open_reports: 0,
+        barcode: '7801234567894',
+        food_portions: [],
+      },
+      error: null,
+    })
+    renderPage(`/meal-prep/new?resume=1&ingredient=${TRAY_ID}`)
+
+    const grams = await screen.findByLabelText('Gramos de Pechuga deshuesada · Super Pollo')
+    // Focus moves on the next frame.
+    await vi.waitFor(() => expect(grams).toHaveFocus())
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Pollo para la semana')
+    expect(screen.getByLabelText('Porciones')).toHaveValue('5')
   })
 })
 

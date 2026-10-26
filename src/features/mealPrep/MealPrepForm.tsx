@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ChevronLeft, Info, Plus, Trash2 } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { ChevronLeft, Info, Plus, ScanBarcode, Trash2 } from 'lucide-react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useFieldArray, useForm, useWatch, type Control } from 'react-hook-form'
 import {
   batchGrams,
@@ -12,12 +12,16 @@ import {
   totalNutrients,
 } from '@/domain/mealPrep'
 import { nutrientsForGrams, type RecipeIngredient } from '@/domain/nutrition'
+import { useFoodDetail, type FoodListItem } from '@/features/foods/api'
 import { decimalText } from '@/features/foods/createFoodSchema'
+import { foodDisplayName } from '@/features/foods/serving'
 import { cx } from '@/lib/cx'
 import { formatGrams, formatKcal } from '@/lib/format'
 import { useGoBack } from '@/lib/useGoBack'
+import { useNavigate } from 'react-router'
 import { Button, Card, IconButton, Input } from '@/ui'
 import { focusRing, pressable } from '@/ui/styles'
+import { saveDraft, scanIngredientHref } from './ingredientReturn'
 import { IngredientSheet } from './IngredientSheet'
 import { mealPrepSchema, type MealPrepInput, type MealPrepValues } from './mealPrepSchema'
 import { NutrientsRow } from './NutrientsRow'
@@ -29,6 +33,12 @@ type MealPrepFormProps = {
   submitLabel: string
   /** A failed save, shown above the button. */
   error?: ReactNode
+  /** This form's own path, where the scanner comes back to (MP-3b). */
+  returnPath: string
+  /** A food just scanned or created, to add as an ingredient. */
+  pendingIngredientId?: string | null
+  /** Called once the pending ingredient was added (or was not found). */
+  onPendingHandled?: () => void
 }
 
 /** HU-17: what was cooked, raw, and what it weighed once cooked. */
@@ -38,14 +48,19 @@ export function MealPrepForm({
   onSubmit,
   submitLabel,
   error,
+  returnPath,
+  pendingIngredientId,
+  onPendingHandled,
 }: MealPrepFormProps) {
-  const goBack = useGoBack('/foods')
+  const navigate = useNavigate()
+  const goBack = useGoBack('/meal-prep')
   const [picking, setPicking] = useState(false)
   const {
     control,
     register,
     handleSubmit,
     setFocus,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<MealPrepInput, unknown, MealPrepValues>({
     resolver: zodResolver(mealPrepSchema),
@@ -53,6 +68,22 @@ export function MealPrepForm({
   })
   const ingredients = useFieldArray({ control, name: 'ingredients' })
   const submit = handleSubmit(onSubmit)
+
+  /** Adds a raw ingredient with its per-100 g snapshot, and moves to its grams. */
+  function addFood(food: Pick<FoodListItem, 'id' | 'name' | 'brand' | 'per100'>) {
+    const index = ingredients.fields.length
+    ingredients.append(
+      { foodId: food.id, foodName: foodDisplayName(food), per100: food.per100, grams: '' },
+      { shouldFocus: false },
+    )
+    // After a sheet gives focus back to its trigger.
+    requestAnimationFrame(() => setFocus(`ingredients.${index}.grams`))
+  }
+
+  function scan() {
+    saveDraft(returnPath, getValues())
+    void navigate(scanIngredientHref(returnPath))
+  }
 
   return (
     <main className="mx-auto min-h-dvh max-w-md px-4 pt-6 pb-32">
@@ -116,19 +147,36 @@ export function MealPrepForm({
               {errors.ingredients.root?.message ?? errors.ingredients.message}
             </p>
           ) : null}
+          {pendingIngredientId && (
+            <PendingIngredient
+              id={pendingIngredientId}
+              onFound={(food) => {
+                addFood(food)
+                onPendingHandled?.()
+              }}
+              onMissing={() => onPendingHandled?.()}
+            />
+          )}
           {ingredients.fields.length < MAX_MEAL_PREP_INGREDIENTS && (
-            <button
-              type="button"
-              onClick={() => setPicking(true)}
-              className={cx(
-                'flex min-h-14 w-full items-center justify-between rounded-card border-2 border-dashed border-ink-muted px-5 text-left font-bold text-ink',
-                focusRing,
-                pressable,
-              )}
-            >
-              Agregar ingrediente
-              <Plus aria-hidden="true" className="size-6" />
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPicking(true)}
+                className={cx(dashedButton, 'flex-1 justify-between px-5 text-left')}
+              >
+                Agregar ingrediente
+                <Plus aria-hidden="true" className="size-6" />
+              </button>
+              {/* MP-3b: the package of what is about to be cooked, e.g. a tray of chicken. */}
+              <button
+                type="button"
+                aria-label="Escanear ingrediente"
+                onClick={scan}
+                className={cx(dashedButton, 'w-14 justify-center')}
+              >
+                <ScanBarcode aria-hidden="true" className="size-6" />
+              </button>
+            </div>
           )}
         </section>
 
@@ -170,22 +218,40 @@ export function MealPrepForm({
         onClose={() => setPicking(false)}
         onPick={(food) => {
           setPicking(false)
-          const index = ingredients.fields.length
-          ingredients.append(
-            {
-              foodId: food.id,
-              foodName: food.brand ? `${food.name} · ${food.brand}` : food.name,
-              per100: food.per100,
-              grams: '',
-            },
-            { shouldFocus: false },
-          )
-          // After the sheet gives focus back to its trigger.
-          requestAnimationFrame(() => setFocus(`ingredients.${index}.grams`))
+          addFood(food)
         }}
       />
     </main>
   )
+}
+
+const dashedButton = cx(
+  'flex min-h-14 items-center rounded-card border-2 border-dashed border-ink-muted font-bold text-ink',
+  focusRing,
+  pressable,
+)
+
+/** Loads a food coming back from the scanner and adds it, once. */
+function PendingIngredient({
+  id,
+  onFound,
+  onMissing,
+}: {
+  id: string
+  onFound: (food: Pick<FoodListItem, 'id' | 'name' | 'brand' | 'per100'>) => void
+  onMissing: () => void
+}) {
+  const food = useFoodDetail(id)
+  const done = useRef(false)
+  useEffect(() => {
+    if (done.current || food.isPending) return
+    done.current = true
+    if (food.data) onFound(food.data)
+    else onMissing()
+  }, [food.data, food.isPending, onFound, onMissing])
+  return food.isPending ? (
+    <p className="px-1 font-semibold text-ink-muted">Agregando el ingrediente…</p>
+  ) : null
 }
 
 /** HU-17 CA5: totals, per 100 g cooked and per serving, while typing. */

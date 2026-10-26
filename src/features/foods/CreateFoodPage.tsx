@@ -2,6 +2,7 @@ import { CircleAlert } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { normalizeBarcode } from '@/domain/barcode'
 import { isIsoDate } from '@/domain/dates'
+import { parseMealPrepReturn, resumeHref } from '@/features/mealPrep/ingredientReturn'
 import { cx } from '@/lib/cx'
 import { parseMeal } from '@/lib/meals'
 import { focusRing } from '@/ui/styles'
@@ -11,7 +12,8 @@ import { FoodForm } from './FoodForm'
 /**
  * Nuevo alimento (HU-09). `?barcode=` comes from the scanner, with `?name=`
  * and `?brand=` when Open Food Facts had an incomplete product; `?name=` alone
- * comes from a search that found nothing.
+ * comes from a search that found nothing. `?return=` is a meal prep form
+ * scanning an ingredient (MP-3b): the new food goes back there.
  */
 export function CreateFoodPage() {
   const navigate = useNavigate()
@@ -24,11 +26,12 @@ export function CreateFoodPage() {
   if (meal) detailParams.set('meal', meal)
   if (date && isIsoDate(date)) detailParams.set('date', date)
   const createFood = useCreateFood()
+  const returnPath = parseMealPrepReturn(params.get('return'))
 
   return (
     <FoodForm
       title="Nuevo alimento"
-      backTo="/add"
+      backTo={returnPath ? resumeHref(returnPath) : '/add'}
       barcode={barcode}
       defaultValues={{
         name: params.get('name')?.trim() ?? '',
@@ -58,7 +61,12 @@ export function CreateFoodPage() {
             portions: values.portions,
           })
           const query = detailParams.toString()
-          void navigate(query ? `/foods/${id}?${query}` : `/foods/${id}`, { replace: true })
+          const to = returnPath
+            ? resumeHref(returnPath, id)
+            : query
+              ? `/foods/${id}?${query}`
+              : `/foods/${id}`
+          void navigate(to, { replace: true })
         } catch {
           // Shown from createFood.error.
         }

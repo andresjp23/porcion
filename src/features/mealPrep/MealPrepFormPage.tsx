@@ -1,13 +1,39 @@
 import { CircleAlert } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { localDate } from '@/domain/dates'
 import { useTimeZone } from '@/features/profile/useProfile'
 import { Button, EmptyState } from '@/ui'
 import { useMealPrep, useSaveMealPrep, type MealPrepRecord } from './api'
+import { clearDraft, readDraft } from './ingredientReturn'
 import { MealPrepForm } from './MealPrepForm'
 import type { MealPrepInput, MealPrepValues } from './mealPrepSchema'
 
 const EMPTY: MealPrepInput = { name: '', ingredients: [], cookedGrams: '', servings: '' }
+const NEW_PATH = '/meal-prep/new'
+
+/**
+ * Coming back from the scanner (MP-3b): `?resume=1` brings back what was
+ * typed, and `?ingredient=` the food to add.
+ */
+function useResume(returnPath: string) {
+  const [params, setParams] = useSearchParams()
+  const [draft] = useState(() => (params.get('resume') === '1' ? readDraft(returnPath) : null))
+  const handled = useCallback(
+    () =>
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete('resume')
+          next.delete('ingredient')
+          return next
+        },
+        { replace: true },
+      ),
+    [setParams],
+  )
+  return { draft, ingredientId: params.get('ingredient'), handled }
+}
 
 /**
  * Nuevo meal prep (HU-17): cooked today, in the user's time zone. `?from=`
@@ -15,20 +41,27 @@ const EMPTY: MealPrepInput = { name: '', ingredients: [], cookedGrams: '', servi
  */
 export function NewMealPrepPage() {
   const [params] = useSearchParams()
-  const fromId = params.get('from') ?? undefined
+  const resume = useResume(NEW_PATH)
+  // A draft already has the copied ingredients in it.
+  const fromId = resume.draft ? undefined : (params.get('from') ?? undefined)
   const source = useMealPrep(fromId)
 
   // Waits for the batch to copy, since the form reads its defaults once.
   if (fromId && source.isPending) {
     return <p className="p-6 font-semibold text-ink-muted">Cargando…</p>
   }
-  const defaultValues: MealPrepInput = source.data
-    ? { ...valuesFrom(source.data), cookedGrams: '' }
-    : EMPTY
-  return <NewForm defaultValues={defaultValues} />
+  const defaultValues: MealPrepInput =
+    resume.draft ?? (source.data ? { ...valuesFrom(source.data), cookedGrams: '' } : EMPTY)
+  return <NewForm defaultValues={defaultValues} resume={resume} />
 }
 
-function NewForm({ defaultValues }: { defaultValues: MealPrepInput }) {
+function NewForm({
+  defaultValues,
+  resume,
+}: {
+  defaultValues: MealPrepInput
+  resume: ReturnType<typeof useResume>
+}) {
   const navigate = useNavigate()
   const today = localDate(new Date(), useTimeZone())
   const save = useSaveMealPrep()
@@ -38,10 +71,14 @@ function NewForm({ defaultValues }: { defaultValues: MealPrepInput }) {
       title="Nuevo meal prep"
       submitLabel="Guardar meal prep"
       defaultValues={defaultValues}
+      returnPath={NEW_PATH}
+      pendingIngredientId={resume.ingredientId}
+      onPendingHandled={resume.handled}
       error={save.isError && <SaveError />}
       onSubmit={async (values) => {
         try {
           const id = await save.mutateAsync(draftFrom(values, today))
+          clearDraft(NEW_PATH)
           void navigate(`/meal-prep/${id}`, { replace: true })
         } catch {
           // Shown from save.isError.
@@ -86,16 +123,22 @@ export function EditMealPrepPage() {
 function EditForm({ prep }: { prep: MealPrepRecord }) {
   const navigate = useNavigate()
   const save = useSaveMealPrep(prep.id)
+  const returnPath = `/meal-prep/${prep.id}/edit`
+  const resume = useResume(returnPath)
 
   return (
     <MealPrepForm
       title="Editar meal prep"
       submitLabel="Guardar cambios"
-      defaultValues={valuesFrom(prep)}
+      defaultValues={resume.draft ?? valuesFrom(prep)}
+      returnPath={returnPath}
+      pendingIngredientId={resume.ingredientId}
+      onPendingHandled={resume.handled}
       error={save.isError && <SaveError />}
       onSubmit={async (values) => {
         try {
           await save.mutateAsync(draftFrom(values, prep.cookedOn))
+          clearDraft(returnPath)
           void navigate(`/meal-prep/${prep.id}`, { replace: true })
         } catch {
           // Shown from save.isError.

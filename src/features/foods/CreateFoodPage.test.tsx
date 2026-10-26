@@ -20,6 +20,7 @@ function renderPage(path = '/foods/new?meal=lunch') {
     [
       { path: '/foods/new', element: <CreateFoodPage /> },
       { path: '/foods/:id', element: <DetailStub /> },
+      { path: '/meal-prep/new', element: <DetailStub /> },
     ],
     { path, session: signedInSession },
   )
@@ -65,6 +66,16 @@ describe('CreateFoodPage', () => {
         },
       ],
     ])
+  })
+
+  it('goes back to the meal prep form that scanned it (MP-3b)', async () => {
+    queueRpcResult('create_food', { data: NEW_ID, error: null })
+    renderPage('/foods/new?barcode=7801234567894&return=%2Fmeal-prep%2Fnew')
+    await fillTuna()
+    await save()
+    expect(
+      await screen.findByText(`Detalle /meal-prep/new?resume=1&ingredient=${NEW_ID}`),
+    ).toBeInTheDocument()
   })
 
   it('keeps the day when opening the new food', async () => {

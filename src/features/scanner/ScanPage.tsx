@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { formatBarcode, type Barcode } from '@/domain/barcode'
 import { isIsoDate } from '@/domain/dates'
 import { cx } from '@/lib/cx'
+import { parseMealPrepReturn, resumeHref } from '@/features/mealPrep/ingredientReturn'
 import { parseMeal } from '@/lib/meals'
 import { useGoBack } from '@/lib/useGoBack'
 import { Button, buttonClasses, IconButton, Sheet } from '@/ui'
@@ -35,11 +36,18 @@ function useForwardParams() {
 /**
  * Escáner (HU-08): reads one code, looks it up (R-10) and opens its Detail, or
  * offers to create it. The code can also be typed when there is no camera.
+ * With `?return=` it scans an ingredient for a meal prep form and goes back
+ * there with the food (MP-3b).
  */
 export function ScanPage() {
   const navigate = useNavigate()
   const forward = useForwardParams()
-  const goBack = useGoBack(`/add${forward()}`)
+  const [params] = useSearchParams()
+  const returnPath = parseMealPrepReturn(params.get('return'))
+  const goBackToAdd = useGoBack(`/add${forward()}`)
+  const goBack = returnPath
+    ? () => void navigate(resumeHref(returnPath), { replace: true })
+    : goBackToAdd
   const [code, setCode] = useState<string | null>(null)
   const [typing, setTyping] = useState(false)
   const lookup = useBarcodeLookup(code)
@@ -56,8 +64,10 @@ export function ScanPage() {
   const foundId = lookup.data?.kind === 'found' ? lookup.data.foodId : null
   useEffect(() => {
     // HU-08 CA3. Replace, so Back from the Detail skips the scanner.
-    if (foundId) void navigate(`/foods/${foundId}${forward()}`, { replace: true })
-  }, [foundId, forward, navigate])
+    if (!foundId) return
+    const to = returnPath ? resumeHref(returnPath, foundId) : `/foods/${foundId}${forward()}`
+    void navigate(to, { replace: true })
+  }, [foundId, forward, navigate, returnPath])
 
   const result: BarcodeLookup | null = lookup.isError
     ? { kind: 'unavailable' }
@@ -88,7 +98,7 @@ export function ScanPage() {
             onClick={goBack}
           />
           <h1 className="justify-self-center rounded-pill bg-camera/70 px-4 py-1 text-xl font-extrabold">
-            Escanear producto
+            {returnPath ? 'Escanear ingrediente' : 'Escanear producto'}
           </h1>
           {torch && <TorchButton on={torch.on} onToggle={torch.toggle} />}
         </header>
@@ -135,6 +145,7 @@ export function ScanPage() {
           code={code}
           result={result}
           forward={forward}
+          returnPath={returnPath}
           onRetry={() => void lookup.refetch()}
           onScanAnother={scanAnother}
         />
@@ -211,17 +222,20 @@ function ResultSheet({
   code,
   result,
   forward,
+  returnPath,
   onRetry,
   onScanAnother,
 }: {
   code: string
   result: Exclude<BarcodeLookup, { kind: 'found' }>
   forward: ReturnType<typeof useForwardParams>
+  /** The meal prep form scanning an ingredient (MP-3b), if any. */
+  returnPath: string | null
   onRetry: () => void
   onScanAnother: () => void
 }) {
   const hint = result.kind === 'missing' ? result.hint : null
-  const createHref = `/foods/new${forward({ barcode: code, name: hint?.name, brand: hint?.brand })}`
+  const createHref = `/foods/new${forward({ barcode: code, name: hint?.name, brand: hint?.brand, return: returnPath })}`
   const unavailable = result.kind === 'unavailable'
 
   return (
@@ -247,6 +261,14 @@ function ResultSheet({
             <Button fullWidth variant="secondary" onClick={onRetry}>
               Intentar de nuevo
             </Button>
+          ) : returnPath ? (
+            <Link
+              to={resumeHref(returnPath)}
+              replace
+              className={buttonClasses({ variant: 'secondary', fullWidth: true })}
+            >
+              Volver al meal prep
+            </Link>
           ) : (
             <Link
               to={`/add${forward({ q: hint?.name })}`}

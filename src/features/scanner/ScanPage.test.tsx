@@ -51,6 +51,7 @@ function renderPage(path = '/scan?meal=lunch') {
       { path: '/foods/new', element: <Stub name="Crear" /> },
       { path: '/foods/:id', element: <Stub name="Detalle" /> },
       { path: '/add', element: <Stub name="Agregar" /> },
+      { path: '/meal-prep/new', element: <Stub name="Meal prep" /> },
     ],
     { path, session: signedInSession },
   )
@@ -212,5 +213,48 @@ describe('ScanPage', () => {
     renderPage('/scan?meal=dinner')
     await userEvent.click(screen.getByRole('button', { name: 'Cerrar escáner' }))
     expect(await screen.findByText('Agregar /add?meal=dinner')).toBeInTheDocument()
+  })
+
+  describe('scanning a meal prep ingredient (MP-3b)', () => {
+    const path = '/scan?return=%2Fmeal-prep%2Fnew'
+
+    it('goes back to the form with the food', async () => {
+      queueQueryResult('foods', { data: { id: FOOD_ID }, error: null })
+      renderPage(path)
+      expect(screen.getByRole('heading', { name: 'Escanear ingrediente' })).toBeInTheDocument()
+
+      scan('7801234567894')
+      expect(
+        await screen.findByText(`Meal prep /meal-prep/new?resume=1&ingredient=${FOOD_ID}`),
+      ).toBeInTheDocument()
+    })
+
+    it('creates a missing product and comes back, or goes back without it', async () => {
+      fetchOffProduct.mockResolvedValue({ status: 'not_found' })
+      renderPage(path)
+      scan('7801234567894')
+
+      const create = await screen.findByRole('link', { name: 'Crear alimento con este código' })
+      expect(create).toHaveAttribute(
+        'href',
+        '/foods/new?barcode=7801234567894&return=%2Fmeal-prep%2Fnew',
+      )
+      await userEvent.click(screen.getByRole('link', { name: 'Volver al meal prep' }))
+      expect(await screen.findByText('Meal prep /meal-prep/new?resume=1')).toBeInTheDocument()
+    })
+
+    it('closes back to the form', async () => {
+      renderPage(path)
+      await userEvent.click(screen.getByRole('button', { name: 'Cerrar escáner' }))
+      expect(await screen.findByText('Meal prep /meal-prep/new?resume=1')).toBeInTheDocument()
+    })
+
+    it('ignores a way back that is not a meal prep form', async () => {
+      queueQueryResult('foods', { data: { id: FOOD_ID }, error: null })
+      renderPage('/scan?meal=lunch&return=https%3A%2F%2Fexample.com')
+      expect(screen.getByRole('heading', { name: 'Escanear producto' })).toBeInTheDocument()
+      scan('7801234567894')
+      expect(await screen.findByText(`Detalle /foods/${FOOD_ID}?meal=lunch`)).toBeInTheDocument()
+    })
   })
 })
