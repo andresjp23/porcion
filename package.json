@@ -18,6 +18,7 @@
     "db:types": "supabase gen types typescript --local > src/lib/database.types.ts",
     "test:db": "supabase test db",
     "seed:build": "tsx scripts/build-seed.ts",
+    "demo:seed": "tsx scripts/seed-demo.ts",
     "pwa:assets": "pwa-assets-generator"
   },
   "dependencies": {

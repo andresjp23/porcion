@@ -49,6 +49,7 @@ supabase start        # Supabase local (requiere Docker). Copia la URL y la anon
 npm run db:reset      # aplica migraciones + seed desde cero
 npm run db:types      # regenera src/lib/database.types.ts
 npm run seed:build    # valida data/ y genera supabase/seed.sql
+npm run demo:seed     # (re)crea la cuenta demo@porcion.app / porcion-demo en el Supabase local
 npm run test:db       # tests pgTAP de supabase/tests (RLS, triggers)
 supabase functions serve  # Edge Functions con recarga; necesario si la función se creó después de supabase start
 ```
