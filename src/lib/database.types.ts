@@ -51,14 +51,14 @@ isOneToOne: false
                   ]
                 },"food_logs": {
                   Row: {
-                    "carbs": number,"created_at": string,"fat": number,"food_id": string | null,"food_name": string,"grams": number,"id": string,"kcal": number,"log_date": string,"meal": Database["public"]['Enums']["meal_type"],"portion_id": string | null,"protein": number,"quantity": number,"user_id": string
+                    "carbs": number,"created_at": string,"fat": number,"food_id": string | null,"food_name": string,"grams": number,"id": string,"kcal": number,"log_date": string,"meal": Database["public"]['Enums']["meal_type"],"meal_prep_id": string | null,"portion_id": string | null,"protein": number,"quantity": number,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "carbs": number,"created_at"?: string,"fat": number,"food_id"?: string | null,"food_name": string,"grams": number,"id"?: string,"kcal": number,"log_date": string,"meal": Database["public"]['Enums']["meal_type"],"portion_id"?: string | null,"protein": number,"quantity": number,"user_id"?: string
+                    "carbs": number,"created_at"?: string,"fat": number,"food_id"?: string | null,"food_name": string,"grams": number,"id"?: string,"kcal": number,"log_date": string,"meal": Database["public"]['Enums']["meal_type"],"meal_prep_id"?: string | null,"portion_id"?: string | null,"protein": number,"quantity": number,"user_id"?: string
                   }
                   Update: {
-                    "carbs"?: number,"created_at"?: string,"fat"?: number,"food_id"?: string | null,"food_name"?: string,"grams"?: number,"id"?: string,"kcal"?: number,"log_date"?: string,"meal"?: Database["public"]['Enums']["meal_type"],"portion_id"?: string | null,"protein"?: number,"quantity"?: number,"user_id"?: string
+                    "carbs"?: number,"created_at"?: string,"fat"?: number,"food_id"?: string | null,"food_name"?: string,"grams"?: number,"id"?: string,"kcal"?: number,"log_date"?: string,"meal"?: Database["public"]['Enums']["meal_type"],"meal_prep_id"?: string | null,"portion_id"?: string | null,"protein"?: number,"quantity"?: number,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -72,6 +72,12 @@ isOneToOne: false
       columns: ["food_id"]
 isOneToOne: false
       referencedRelation: "foods"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "food_logs_meal_prep_id_fkey"
+      columns: ["meal_prep_id"]
+isOneToOne: false
+      referencedRelation: "meal_preps"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "food_logs_portion_id_fkey"
@@ -149,6 +155,52 @@ isOneToOne: false
                   }
                   Update: {
                     "aliases"?: (string)[],"barcode"?: string | null,"basis"?: Database["public"]['Enums']["food_basis"],"brand"?: string | null,"carbs_100"?: number,"created_at"?: string,"created_by"?: string | null,"fat_100"?: number,"id"?: string,"kcal_100"?: number,"name"?: string,"open_reports"?: number,"protein_100"?: number,"search_text"?: never,"source"?: Database["public"]['Enums']["food_source"],"updated_at"?: string,"verified"?: boolean
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"meal_prep_ingredients": {
+                  Row: {
+                    "carbs_100": number,"fat_100": number,"food_id": string | null,"food_name": string,"grams": number,"id": string,"kcal_100": number,"meal_prep_id": string,"position": number,"protein_100": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "carbs_100": number,"fat_100": number,"food_id"?: string | null,"food_name": string,"grams": number,"id"?: string,"kcal_100": number,"meal_prep_id": string,"position": number,"protein_100": number
+                  }
+                  Update: {
+                    "carbs_100"?: number,"fat_100"?: number,"food_id"?: string | null,"food_name"?: string,"grams"?: number,"id"?: string,"kcal_100"?: number,"meal_prep_id"?: string,"position"?: number,"protein_100"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "meal_prep_ingredients_food_id_fkey"
+      columns: ["food_id"]
+isOneToOne: false
+      referencedRelation: "food_list_items"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "meal_prep_ingredients_food_id_fkey"
+      columns: ["food_id"]
+isOneToOne: false
+      referencedRelation: "foods"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "meal_prep_ingredients_meal_prep_id_fkey"
+      columns: ["meal_prep_id"]
+isOneToOne: false
+      referencedRelation: "meal_preps"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"meal_preps": {
+                  Row: {
+                    "cooked_grams": number | null,"cooked_on": string,"created_at": string,"finished_at": string | null,"id": string,"name": string,"servings": number | null,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cooked_grams"?: number | null,"cooked_on": string,"created_at"?: string,"finished_at"?: string | null,"id"?: string,"name": string,"servings"?: number | null,"updated_at"?: string,"user_id"?: string
+                  }
+                  Update: {
+                    "cooked_grams"?: number | null,"cooked_on"?: string,"created_at"?: string,"finished_at"?: string | null,"id"?: string,"name"?: string,"servings"?: number | null,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     
@@ -319,6 +371,11 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"my_meal_preps":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "cooked_grams": number,"cooked_on": string,"created_at": string,"finished_at": string,"id": string,"ingredients": Json,"logged_grams": number,"name": string,"servings": number
+            }[]
+                           },
 "recent_foods":
 { Args: { "lim"?: number }; Returns: {
               "basis": Database["public"]['Enums']["food_basis"] | null,
@@ -342,6 +399,9 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"save_meal_prep":
+{ Args: { "cooked_grams": number,"cooked_on": string,"ingredients": Json,"name": string,"prep_id": string,"servings": number }; Returns: string
+                           },
 "scan_into_list":
 { Args: { "barcode": string,"claim_item_id"?: string,"food_id"?: string,"label": string,"list_id": string }; Returns: Json
                            },
