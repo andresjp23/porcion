@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
 
@@ -14,10 +15,20 @@ export const deleteAccountSchema = z.object({
     ),
 })
 
+/** The public demo account (Q-5) cannot be deleted: everyone shares it. */
+export class DemoAccountError extends Error {}
+
 /** Deletes the signed-in user through the `delete-account` Edge Function. */
 export async function deleteMyAccount() {
   const { error } = await supabase.functions.invoke('delete-account', {
     body: { confirmation: DELETE_CONFIRMATION },
   })
-  if (error) throw error
+  if (!error) return
+  if (error instanceof FunctionsHttpError) {
+    const body: unknown = await error.context.json().catch(() => null)
+    if (body && typeof body === 'object' && 'error' in body && body.error === 'demo_account') {
+      throw new DemoAccountError()
+    }
+  }
+  throw error
 }

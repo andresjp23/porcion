@@ -10,8 +10,14 @@ import { createClient } from 'npm:@supabase/supabase-js@2.118.0'
 /** Same phrase as DELETE_CONFIRMATION in src/features/profile/deleteAccount.ts. */
 const DELETE_CONFIRMATION = 'ELIMINAR'
 
+// Secrets in production (Q-4): the app's origin, and the public demo account,
+// which visitors must not be able to delete for everyone else (Q-5).
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? '*'
+const DEMO_EMAIL = Deno.env.get('DEMO_EMAIL')
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+  Vary: 'Origin',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -46,6 +52,7 @@ Deno.serve(async (request) => {
   // Verifies the JWT with Auth; an anon key or a forged token gives no user.
   const { data, error } = await admin.auth.getUser(token)
   if (error || !data.user) return json(401, { error: 'unauthorized' })
+  if (DEMO_EMAIL && data.user.email === DEMO_EMAIL) return json(403, { error: 'demo_account' })
 
   const { error: deleteError } = await admin.auth.admin.deleteUser(data.user.id)
   if (deleteError) {

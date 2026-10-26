@@ -6,7 +6,12 @@ import { useNavigate } from 'react-router'
 import type { z } from 'zod'
 import { supabase } from '@/lib/supabase'
 import { Button, Card, Input, Sheet } from '@/ui'
-import { DELETE_CONFIRMATION, deleteAccountSchema, deleteMyAccount } from './deleteAccount'
+import {
+  DELETE_CONFIRMATION,
+  DemoAccountError,
+  deleteAccountSchema,
+  deleteMyAccount,
+} from './deleteAccount'
 
 type DeleteAccountSheetProps = {
   open: boolean
@@ -38,8 +43,12 @@ export function DeleteAccountSheet({ open, onClose }: DeleteAccountSheetProps) {
     setError(null)
     try {
       await deleteMyAccount()
-    } catch {
-      setError('No pudimos eliminar tu cuenta. Revisa tu conexión e inténtalo de nuevo.')
+    } catch (cause) {
+      setError(
+        cause instanceof DemoAccountError
+          ? 'Esta es la cuenta demo, compartida por todos: no se puede eliminar.'
+          : 'No pudimos eliminar tu cuenta. Revisa tu conexión e inténtalo de nuevo.',
+      )
       return
     }
     // Leave the guarded routes first, so signing out does not bounce to /login.

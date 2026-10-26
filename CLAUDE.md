@@ -70,6 +70,19 @@ Cada vez que se prueba en el teléfono:
 
 Al terminar, volver `.env.local` a `http://127.0.0.1:54321` y `http://127.0.0.1:54321/auth/v1/callback`, y reiniciar Supabase, o Google en el computador intentará volver por el túnel.
 
+### Desplegar (Q-4)
+
+Frontend en Vercel (`vercel.json`) y backend en un proyecto de Supabase. Una vez:
+
+1. **Supabase:** crear el proyecto (región São Paulo, la más cercana) y anotar la URL, la anon key y la `service_role` key (esta última nunca va a Vercel ni al repo).
+2. `supabase link --project-ref <ref>` y `supabase db push` (migraciones). Cargar el seed con `psql "<connection string>" -f supabase/seed.sql`.
+3. **Edge Function:** `supabase functions deploy delete-account` y `supabase secrets set ALLOWED_ORIGIN=https://<dominio> DEMO_EMAIL=demo@porcion.app`.
+4. **Auth (panel de Supabase):** Site URL `https://<dominio>` y la misma en Redirect URLs; Google con el cliente OAuth y su URI `https://<ref>.supabase.co/auth/v1/callback`; confirmar correo activado; las plantillas de `supabase/templates/` en Email Templates.
+5. **Vercel:** importar el repo y definir `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` y `VITE_OFF_USER_AGENT`.
+6. **Demo:** `SUPABASE_URL=… SUPABASE_ANON_KEY=… SUPABASE_SERVICE_ROLE_KEY=… DEMO_PASSWORD=porcion-demo npm run demo:seed`. Repetirlo de vez en cuando: la cuenta es pública.
+
+Después, cada push a `main` despliega solo. Las migraciones nuevas van con `supabase db push`.
+
 ## Estructura de carpetas
 
 ```

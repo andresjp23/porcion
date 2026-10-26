@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Tables } from '@/lib/database.types'
@@ -224,6 +225,19 @@ describe('ProfilePage', () => {
         await screen.findByRole('heading', { name: 'Eliminamos tu cuenta' }),
       ).toBeInTheDocument()
       expect(mock.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
+    })
+
+    it('explains that the demo account cannot be deleted', async () => {
+      const response = new Response(JSON.stringify({ error: 'demo_account' }), { status: 403 })
+      vi.mocked(mock.functions.invoke).mockResolvedValue({
+        data: null,
+        error: new FunctionsHttpError(response),
+      })
+      const sheet = await openDelete()
+      await userEvent.type(sheet.getByLabelText('Escribe ELIMINAR para confirmar'), 'ELIMINAR')
+      await userEvent.click(sheet.getByRole('button', { name: 'Eliminar mi cuenta' }))
+      expect(await sheet.findByRole('alert')).toHaveTextContent('cuenta demo')
+      expect(mock.auth.signOut).not.toHaveBeenCalled()
     })
 
     it('keeps the account and says so when the deletion fails', async () => {
