@@ -24,8 +24,9 @@ function NavItemLink({ to, label, icon: Icon }: NavItem) {
         className={({ isActive }) =>
           cx(
             'flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-card text-sm font-bold',
-            isActive ? 'bg-surface-2 text-accent' : 'text-on-surface',
+            isActive ? 'text-accent' : 'text-on-surface',
             focusRing,
+            pressable,
           )
         }
       >
