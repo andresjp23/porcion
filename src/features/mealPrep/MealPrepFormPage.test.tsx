@@ -33,7 +33,7 @@ function renderPage(path: string) {
     [
       { path: '/meal-prep/new', element: <NewMealPrepPage /> },
       { path: '/meal-prep/:id/edit', element: <EditMealPrepPage /> },
-      { path: '/foods', element: <p>Alimentos</p> },
+      { path: '/meal-prep/:id', element: <p>Detalle del meal prep</p> },
     ],
     { path, session: signedInSession },
   )
@@ -83,7 +83,7 @@ describe('NewMealPrepPage', () => {
     )
 
     await userEvent.click(screen.getByRole('button', { name: 'Guardar meal prep' }))
-    expect(await screen.findByText('Alimentos')).toBeInTheDocument()
+    expect(await screen.findByText('Detalle del meal prep')).toBeInTheDocument()
     expect(saveCalls()).toEqual([
       [
         'save_meal_prep',
@@ -128,7 +128,7 @@ describe('NewMealPrepPage', () => {
 
     expect(screen.getByText(/Sin peso cocido usamos el peso crudo \(500 g\)/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Guardar meal prep' }))
-    expect(await screen.findByText('Alimentos')).toBeInTheDocument()
+    expect(await screen.findByText('Detalle del meal prep')).toBeInTheDocument()
     expect(saveCalls()[0]?.[1]).toMatchObject({ cooked_grams: null, servings: null })
   })
 
@@ -166,6 +166,53 @@ describe('NewMealPrepPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Guardar meal prep' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos guardar tu meal prep')
     expect(screen.getByLabelText('Nombre')).toHaveValue('Pollo')
+  })
+})
+
+describe('Hacer de nuevo (HU-19 CA3)', () => {
+  beforeEach(() => {
+    resetSupabaseMock()
+    setRpcDefault('recent_foods', { data: [], error: null })
+  })
+
+  it('copies the name, ingredients and servings, and asks for the cooked weight again', async () => {
+    setRpcDefault('my_meal_preps', {
+      data: [
+        {
+          id: PREP_ID,
+          name: 'Arroz',
+          cooked_on: '2026-10-20',
+          cooked_grams: 600,
+          servings: 4,
+          finished_at: '2026-10-23T12:00:00Z',
+          created_at: '2026-10-20T20:00:00Z',
+          logged_grams: 450,
+          ingredients: [
+            {
+              food_id: null,
+              food_name: 'Arroz crudo',
+              grams: 200,
+              kcal_100: 360,
+              protein_100: 6.6,
+              carbs_100: 79,
+              fat_100: 0.6,
+            },
+          ],
+        },
+      ],
+      error: null,
+    })
+    queueRpcResult('save_meal_prep', { data: 'new-id', error: null })
+    renderPage(`/meal-prep/new?from=${PREP_ID}`)
+
+    expect(await screen.findByLabelText('Nombre')).toHaveValue('Arroz')
+    expect(screen.getByLabelText('Gramos de Arroz crudo')).toHaveValue('200')
+    expect(screen.getByLabelText('Porciones')).toHaveValue('4')
+    expect(screen.getByLabelText('Peso cocido (g)')).toHaveValue('')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar meal prep' }))
+    expect(await screen.findByText('Detalle del meal prep')).toBeInTheDocument()
+    expect(saveCalls()[0]?.[1]).toMatchObject({ prep_id: null, name: 'Arroz', servings: 4 })
   })
 })
 
@@ -211,12 +258,44 @@ describe('EditMealPrepPage', () => {
     await userEvent.type(cooked, '620')
     await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
-    expect(await screen.findByText('Alimentos')).toBeInTheDocument()
+    expect(await screen.findByText('Detalle del meal prep')).toBeInTheDocument()
     expect(saveCalls()[0]?.[1]).toMatchObject({
       prep_id: PREP_ID,
       cooked_on: '2026-10-24',
       cooked_grams: 620,
     })
+  })
+
+  it('reads back grams without the thousands dot, which would parse as decimals', async () => {
+    setRpcDefault('my_meal_preps', {
+      data: [
+        {
+          id: PREP_ID,
+          name: 'Porotos para el mes',
+          cooked_on: '2026-10-24',
+          cooked_grams: 12500.5,
+          servings: null,
+          finished_at: null,
+          created_at: '2026-10-24T20:00:00Z',
+          logged_grams: 0,
+          ingredients: [
+            {
+              food_id: null,
+              food_name: 'Porotos secos',
+              grams: 5000,
+              kcal_100: 340,
+              protein_100: 21,
+              carbs_100: 60,
+              fat_100: 1,
+            },
+          ],
+        },
+      ],
+      error: null,
+    })
+    renderPage(`/meal-prep/${PREP_ID}/edit`)
+    expect(await screen.findByLabelText('Peso cocido (g)')).toHaveValue('12500,5')
+    expect(screen.getByLabelText('Gramos de Porotos secos')).toHaveValue('5000')
   })
 
   it('says so when the batch does not exist', async () => {

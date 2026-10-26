@@ -11,7 +11,7 @@ import {
   servingGrams,
   totalNutrients,
 } from '@/domain/mealPrep'
-import { nutrientsForGrams, type Nutrients, type RecipeIngredient } from '@/domain/nutrition'
+import { nutrientsForGrams, type RecipeIngredient } from '@/domain/nutrition'
 import { decimalText } from '@/features/foods/createFoodSchema'
 import { cx } from '@/lib/cx'
 import { formatGrams, formatKcal } from '@/lib/format'
@@ -20,6 +20,7 @@ import { Button, Card, IconButton, Input } from '@/ui'
 import { focusRing, pressable } from '@/ui/styles'
 import { IngredientSheet } from './IngredientSheet'
 import { mealPrepSchema, type MealPrepInput, type MealPrepValues } from './mealPrepSchema'
+import { NutrientsRow } from './NutrientsRow'
 
 type MealPrepFormProps = {
   title: string
@@ -215,10 +216,10 @@ function Summary({ control }: { control: Control<MealPrepInput, unknown, MealPre
         <h2 id="summary-heading" className="text-lg font-extrabold">
           Resumen
         </h2>
-        <SummaryRow label="Todo el lote" nutrients={totalNutrients(ingredients)} />
-        <SummaryRow label={cookedGrams ? 'Por 100 g cocidos' : 'Por 100 g'} nutrients={per100} />
+        <NutrientsRow label="Todo el lote" nutrients={totalNutrients(ingredients)} />
+        <NutrientsRow label={cookedGrams ? 'Por 100 g cocidos' : 'Por 100 g'} nutrients={per100} />
         {perServing !== null && (
-          <SummaryRow
+          <NutrientsRow
             label={`Por porción (${formatGrams(perServing)} g)`}
             nutrients={nutrientsForGrams(per100, perServing)}
           />
@@ -237,21 +238,6 @@ function Summary({ control }: { control: Control<MealPrepInput, unknown, MealPre
         )}
       </Card>
     </section>
-  )
-}
-
-function SummaryRow({ label, nutrients }: { label: string; nutrients: Nutrients }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3">
-      <span className="font-bold text-on-surface-muted">{label}</span>
-      <span className="text-right font-semibold tabular-nums">
-        <span className="font-extrabold">{formatKcal(nutrients.kcal)} kcal</span>
-        <span className="block text-sm text-on-surface-muted">
-          P {formatGrams(nutrients.protein)} · C {formatGrams(nutrients.carbs)} · G{' '}
-          {formatGrams(nutrients.fat)} g
-        </span>
-      </span>
-    </div>
   )
 }
 

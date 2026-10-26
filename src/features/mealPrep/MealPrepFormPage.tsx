@@ -1,8 +1,7 @@
 import { CircleAlert } from 'lucide-react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { localDate } from '@/domain/dates'
 import { useTimeZone } from '@/features/profile/useProfile'
-import { formatGrams } from '@/lib/format'
 import { Button, EmptyState } from '@/ui'
 import { useMealPrep, useSaveMealPrep, type MealPrepRecord } from './api'
 import { MealPrepForm } from './MealPrepForm'
@@ -10,8 +9,26 @@ import type { MealPrepInput, MealPrepValues } from './mealPrepSchema'
 
 const EMPTY: MealPrepInput = { name: '', ingredients: [], cookedGrams: '', servings: '' }
 
-/** Nuevo meal prep (HU-17): cooked today, in the user's time zone. */
+/**
+ * Nuevo meal prep (HU-17): cooked today, in the user's time zone. `?from=`
+ * is "Hacer de nuevo" (HU-19 CA3): same ingredients, weighed again once cooked.
+ */
 export function NewMealPrepPage() {
+  const [params] = useSearchParams()
+  const fromId = params.get('from') ?? undefined
+  const source = useMealPrep(fromId)
+
+  // Waits for the batch to copy, since the form reads its defaults once.
+  if (fromId && source.isPending) {
+    return <p className="p-6 font-semibold text-ink-muted">Cargando…</p>
+  }
+  const defaultValues: MealPrepInput = source.data
+    ? { ...valuesFrom(source.data), cookedGrams: '' }
+    : EMPTY
+  return <NewForm defaultValues={defaultValues} />
+}
+
+function NewForm({ defaultValues }: { defaultValues: MealPrepInput }) {
   const navigate = useNavigate()
   const today = localDate(new Date(), useTimeZone())
   const save = useSaveMealPrep()
@@ -20,13 +37,12 @@ export function NewMealPrepPage() {
     <MealPrepForm
       title="Nuevo meal prep"
       submitLabel="Guardar meal prep"
-      defaultValues={EMPTY}
+      defaultValues={defaultValues}
       error={save.isError && <SaveError />}
       onSubmit={async (values) => {
         try {
-          await save.mutateAsync(draftFrom(values, today))
-          // MP-4 sends this to the batch's own page.
-          void navigate('/foods', { replace: true })
+          const id = await save.mutateAsync(draftFrom(values, today))
+          void navigate(`/meal-prep/${id}`, { replace: true })
         } catch {
           // Shown from save.isError.
         }
@@ -75,28 +91,36 @@ function EditForm({ prep }: { prep: MealPrepRecord }) {
     <MealPrepForm
       title="Editar meal prep"
       submitLabel="Guardar cambios"
-      defaultValues={{
-        name: prep.name,
-        ingredients: prep.ingredients.map((ingredient) => ({
-          foodId: ingredient.foodId,
-          foodName: ingredient.foodName,
-          per100: ingredient.per100,
-          grams: formatGrams(ingredient.grams),
-        })),
-        cookedGrams: prep.cookedGrams === null ? '' : formatGrams(prep.cookedGrams),
-        servings: prep.servings === null ? '' : String(prep.servings),
-      }}
+      defaultValues={valuesFrom(prep)}
       error={save.isError && <SaveError />}
       onSubmit={async (values) => {
         try {
           await save.mutateAsync(draftFrom(values, prep.cookedOn))
-          void navigate('/foods', { replace: true })
+          void navigate(`/meal-prep/${prep.id}`, { replace: true })
         } catch {
           // Shown from save.isError.
         }
       }}
     />
   )
+}
+
+// Not formatGrams: it groups thousands ("1.700"), which reads back as 1,7.
+const toInput = (value: number) => String(value).replace('.', ',')
+
+/** A saved batch as form text. */
+function valuesFrom(prep: MealPrepRecord): MealPrepInput {
+  return {
+    name: prep.name,
+    ingredients: prep.ingredients.map((ingredient) => ({
+      foodId: ingredient.foodId,
+      foodName: ingredient.foodName,
+      per100: ingredient.per100,
+      grams: toInput(ingredient.grams),
+    })),
+    cookedGrams: prep.cookedGrams === null ? '' : toInput(prep.cookedGrams),
+    servings: prep.servings === null ? '' : String(prep.servings),
+  }
 }
 
 function draftFrom(values: MealPrepValues, cookedOn: string) {

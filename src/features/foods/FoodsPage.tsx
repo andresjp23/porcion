@@ -1,7 +1,9 @@
 import { ChefHat, ChevronRight, CircleDashed, ScanBarcode, ShoppingCart } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
+import { isFinished } from '@/domain/mealPrep'
 import { listProgress } from '@/domain/shopping'
+import { toMealPrep, useMealPreps } from '@/features/mealPrep/api'
 import { useActiveList, usePendingCodes } from '@/features/shopping/api'
 import { cx } from '@/lib/cx'
 import { BottomNav } from '@/ui'
@@ -25,13 +27,7 @@ export function FoodsPage() {
           detail="Escanea lo que compras, con o sin lista"
         />
         <PendingCard />
-        {/* MP-4 turns this into the list of batches. */}
-        <NavCard
-          to="/meal-prep/new"
-          icon={<ChefHat />}
-          title="Meal prep"
-          detail="Anota lo que cocinaste para la semana"
-        />
+        <MealPrepNavCard />
       </main>
       <BottomNav />
     </>
@@ -49,6 +45,25 @@ function ShoppingListCard() {
         : `${checked} de ${total} ${total === 1 ? 'marcado' : 'marcados'}`
   }
   return <NavCard to="/shopping" icon={<ShoppingCart />} title="Lista de compras" detail={detail} />
+}
+
+function MealPrepNavCard() {
+  const preps = useMealPreps()
+  const active = preps.data?.filter((prep) => !isFinished(toMealPrep(prep))).length ?? 0
+  return (
+    <NavCard
+      to="/meal-prep"
+      icon={<ChefHat />}
+      title="Meal prep"
+      detail={
+        active === 0
+          ? 'Anota lo que cocinaste para la semana'
+          : active === 1
+            ? '1 activo'
+            : `${active} activos`
+      }
+    />
+  )
 }
 
 /** HU-12 CA5: only while there are scanned codes to complete. */

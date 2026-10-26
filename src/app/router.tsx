@@ -11,6 +11,8 @@ import { FoodDetailPage } from '@/features/foods/FoodDetailPage'
 import { FoodsPage } from '@/features/foods/FoodsPage'
 import { PrivacyPage } from '@/features/legal/PrivacyPage'
 import { EditMealPrepPage, NewMealPrepPage } from '@/features/mealPrep/MealPrepFormPage'
+import { MealPrepListPage } from '@/features/mealPrep/MealPrepListPage'
+import { MealPrepPage } from '@/features/mealPrep/MealPrepPage'
 import { TermsPage } from '@/features/legal/TermsPage'
 import { OnboardingPage } from '@/features/onboarding/OnboardingPage'
 import { AccountDeletedPage } from '@/features/profile/AccountDeletedPage'
@@ -60,7 +62,9 @@ export const routes: RouteObject[] = [
       { path: '/foods/new', element: <CreateFoodPage /> },
       { path: '/foods/:id', element: <FoodDetailPage /> },
       { path: '/foods/:id/edit', element: <EditFoodPage /> },
+      { path: '/meal-prep', element: <MealPrepListPage /> },
       { path: '/meal-prep/new', element: <NewMealPrepPage /> },
+      { path: '/meal-prep/:id', element: <MealPrepPage /> },
       { path: '/meal-prep/:id/edit', element: <EditMealPrepPage /> },
       { path: '/scan', element: <ScanPage /> },
       { path: '/shopping', element: <ShoppingPage /> },

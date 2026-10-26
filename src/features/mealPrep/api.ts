@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
+import type { MealPrep } from '@/domain/mealPrep'
 import type { Nutrients } from '@/domain/nutrition'
 import { supabase } from '@/lib/supabase'
 
@@ -125,6 +126,44 @@ export function useSaveMealPrep(id?: string) {
       })
       if (error) throw error
       return z.string().parse(data)
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: mealPrepKeys.all }),
+  })
+}
+
+/** The record as the domain reads it (R-14). */
+export function toMealPrep(record: MealPrepRecord): MealPrep {
+  return {
+    ingredients: record.ingredients,
+    cookedGrams: record.cookedGrams,
+    servings: record.servings,
+    finishedByHand: record.finishedAt !== null,
+    loggedGrams: record.loggedGrams,
+  }
+}
+
+/** HU-19 CA1 and CA2: "Se terminó" and "Reactivar". */
+export function useSetMealPrepFinished(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (finished: boolean) => {
+      const { error } = await supabase
+        .from('meal_preps')
+        .update({ finished_at: finished ? new Date().toISOString() : null })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: mealPrepKeys.all }),
+  })
+}
+
+/** HU-19 CA4: the logs stay, with their snapshot. */
+export function useDeleteMealPrep(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('meal_preps').delete().eq('id', id)
+      if (error) throw error
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: mealPrepKeys.all }),
   })
