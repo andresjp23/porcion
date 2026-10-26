@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
-import { profileKey } from '@/features/profile/useProfile'
+import { profileKey, useProfile } from '@/features/profile/useProfile'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/ui/Button'
 import { Card } from '@/ui/Card'
@@ -15,13 +15,17 @@ import { useAuth } from './useAuth'
 /**
  * HU-01 CA2 for Google sign-in, which cannot send consent at sign-up: the user
  * accepts here before any health data is saved. StageGuard only shows it to
- * signed-in users who have not accepted yet.
+ * signed-in users who have not accepted yet, or who accepted an older version
+ * of the policy (U-4c).
  */
 export function ConsentPage() {
   const auth = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [formError, setFormError] = useState<string | null>(null)
+  const profile = useProfile(auth.session?.user.id)
+  // U-4c: accepted before, but an older version of the policy.
+  const isUpdate = Boolean(profile.data?.privacy_accepted_at)
   const {
     register,
     handleSubmit,
@@ -51,8 +55,12 @@ export function ConsentPage() {
 
   return (
     <AuthLayout
-      title="Antes de empezar"
-      subtitle="Necesitamos tu acuerdo para guardar tus comidas, tu peso y tu meta."
+      title={isUpdate ? 'Actualizamos nuestras condiciones' : 'Antes de empezar'}
+      subtitle={
+        isUpdate
+          ? 'Cambiaron los Términos o la Política de privacidad. Revísalos y acepta para seguir usando la app.'
+          : 'Necesitamos tu acuerdo para guardar tus comidas, tu peso y tu meta.'
+      }
     >
       <form
         noValidate

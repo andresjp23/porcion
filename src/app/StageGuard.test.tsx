@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react'
+import { PRIVACY_VERSION } from '@/features/auth/consent'
 import { supabase } from '@/lib/supabase'
 import { renderWithAuth, resetSupabaseMock, signedInSession } from '@/test/renderWithAuth'
 import { queueQueryResult } from '@/test/supabaseMock'
@@ -24,7 +25,12 @@ const routes = [
 
 function profile(privacy: string | null, onboarding: string | null) {
   return {
-    data: { id: 'user-1', privacy_accepted_at: privacy, onboarding_completed_at: onboarding },
+    data: {
+      id: 'user-1',
+      privacy_version: privacy && PRIVACY_VERSION,
+      privacy_accepted_at: privacy,
+      onboarding_completed_at: onboarding,
+    },
     error: null,
   }
 }

@@ -1,6 +1,8 @@
+import { PRIVACY_VERSION } from './consent'
 import { stageFor } from './stage'
 
 const done = '2026-10-22T12:00:00Z'
+const current = PRIVACY_VERSION
 
 describe('stageFor', () => {
   it('sends visitors without a session to sign in', () => {
@@ -12,18 +14,42 @@ describe('stageFor', () => {
   })
 
   it('asks for consent before anything else', () => {
-    expect(stageFor(true, { privacy_accepted_at: null, onboarding_completed_at: null })).toBe(
-      'consent',
-    )
+    expect(
+      stageFor(true, {
+        privacy_version: null,
+        privacy_accepted_at: null,
+        onboarding_completed_at: null,
+      }),
+    ).toBe('consent')
   })
 
   it('asks for onboarding after consent', () => {
-    expect(stageFor(true, { privacy_accepted_at: done, onboarding_completed_at: null })).toBe(
-      'onboarding',
-    )
+    expect(
+      stageFor(true, {
+        privacy_version: current,
+        privacy_accepted_at: done,
+        onboarding_completed_at: null,
+      }),
+    ).toBe('onboarding')
   })
 
   it('lets a fully set-up user into the app', () => {
-    expect(stageFor(true, { privacy_accepted_at: done, onboarding_completed_at: done })).toBe('app')
+    expect(
+      stageFor(true, {
+        privacy_version: current,
+        privacy_accepted_at: done,
+        onboarding_completed_at: done,
+      }),
+    ).toBe('app')
+  })
+
+  it('asks again when the policy changed since it was accepted (U-4c)', () => {
+    expect(
+      stageFor(true, {
+        privacy_version: '2020-01',
+        privacy_accepted_at: done,
+        onboarding_completed_at: done,
+      }),
+    ).toBe('consent')
   })
 })
