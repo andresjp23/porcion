@@ -1,4 +1,4 @@
-import { ChevronRight, CircleDashed, ScanBarcode, ShoppingCart } from 'lucide-react'
+import { ChefHat, ChevronRight, CircleDashed, ScanBarcode, ShoppingCart } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { listProgress } from '@/domain/shopping'
@@ -9,7 +9,8 @@ import { focusRing, pressable } from '@/ui/styles'
 
 /**
  * Alimentos, the tab of the bottom bar (S-5b): the shopping list, the
- * supermarket mode and, when there are any, the codes to complete (S-7).
+ * supermarket mode, when there are any, the codes to complete (S-7), and
+ * meal prep (MP-3).
  */
 export function FoodsPage() {
   return (
@@ -24,6 +25,13 @@ export function FoodsPage() {
           detail="Escanea lo que compras, con o sin lista"
         />
         <PendingCard />
+        {/* MP-4 turns this into the list of batches. */}
+        <NavCard
+          to="/meal-prep/new"
+          icon={<ChefHat />}
+          title="Meal prep"
+          detail="Anota lo que cocinaste para la semana"
+        />
       </main>
       <BottomNav />
     </>

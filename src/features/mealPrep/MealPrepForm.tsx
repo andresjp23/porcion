@@ -1,0 +1,265 @@
+import { zodResolver } from '@hookform/resolvers/zod'
+import { ChevronLeft, Info, Plus, Trash2 } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { useFieldArray, useForm, useWatch, type Control } from 'react-hook-form'
+import {
+  batchGrams,
+  cookedWeightLooksOff,
+  MAX_MEAL_PREP_INGREDIENTS,
+  per100Cooked,
+  rawGrams,
+  servingGrams,
+  totalNutrients,
+} from '@/domain/mealPrep'
+import { nutrientsForGrams, type Nutrients, type RecipeIngredient } from '@/domain/nutrition'
+import { decimalText } from '@/features/foods/createFoodSchema'
+import { cx } from '@/lib/cx'
+import { formatGrams, formatKcal } from '@/lib/format'
+import { useGoBack } from '@/lib/useGoBack'
+import { Button, Card, IconButton, Input } from '@/ui'
+import { focusRing, pressable } from '@/ui/styles'
+import { IngredientSheet } from './IngredientSheet'
+import { mealPrepSchema, type MealPrepInput, type MealPrepValues } from './mealPrepSchema'
+
+type MealPrepFormProps = {
+  title: string
+  defaultValues: MealPrepInput
+  onSubmit: (values: MealPrepValues) => Promise<void>
+  submitLabel: string
+  /** A failed save, shown above the button. */
+  error?: ReactNode
+}
+
+/** HU-17: what was cooked, raw, and what it weighed once cooked. */
+export function MealPrepForm({
+  title,
+  defaultValues,
+  onSubmit,
+  submitLabel,
+  error,
+}: MealPrepFormProps) {
+  const goBack = useGoBack('/foods')
+  const [picking, setPicking] = useState(false)
+  const {
+    control,
+    register,
+    handleSubmit,
+    setFocus,
+    formState: { errors, isSubmitting },
+  } = useForm<MealPrepInput, unknown, MealPrepValues>({
+    resolver: zodResolver(mealPrepSchema),
+    defaultValues,
+  })
+  const ingredients = useFieldArray({ control, name: 'ingredients' })
+  const submit = handleSubmit(onSubmit)
+
+  return (
+    <main className="mx-auto min-h-dvh max-w-md px-4 pt-6 pb-32">
+      <header className="mb-6 flex items-center gap-3">
+        <IconButton
+          label="Volver"
+          icon={<ChevronLeft aria-hidden="true" />}
+          size="lg"
+          onClick={goBack}
+        />
+        <h1 className="text-3xl font-extrabold">{title}</h1>
+      </header>
+
+      <form noValidate onSubmit={(event) => void submit(event)} className="space-y-4">
+        <Card radius="lg">
+          <Input
+            label="Nombre"
+            placeholder="Pollo a la plancha"
+            autoComplete="off"
+            error={errors.name?.message}
+            {...register('name')}
+          />
+        </Card>
+
+        <section aria-labelledby="ingredients-heading" className="space-y-3">
+          <div className="px-1">
+            <h2 id="ingredients-heading" className="text-lg font-extrabold">
+              Ingredientes en crudo
+            </h2>
+            <p className="text-sm font-semibold text-ink-soft">
+              Con lo que pesaban antes de cocinar. El aceite también cuenta.
+            </p>
+          </div>
+          {ingredients.fields.map((field, index) => (
+            <Card key={field.id} className="flex items-start gap-3">
+              <div className="min-w-0 flex-1 pt-1">
+                {/* Wraps instead of truncating: "cruda" or "cocida" often comes last. */}
+                <p className="font-extrabold [overflow-wrap:anywhere]">{field.foodName}</p>
+                <p className="text-sm font-semibold text-on-surface-muted">
+                  {formatKcal(field.per100.kcal)} kcal / 100 g
+                </p>
+              </div>
+              <Input
+                label={`Gramos de ${field.foodName}`}
+                inputMode="decimal"
+                placeholder="850"
+                className="w-28 [&_label]:sr-only"
+                error={errors.ingredients?.[index]?.grams?.message}
+                {...register(`ingredients.${index}.grams`)}
+              />
+              <IconButton
+                label={`Quitar ${field.foodName}`}
+                icon={<Trash2 aria-hidden="true" />}
+                variant="subtle"
+                onClick={() => ingredients.remove(index)}
+              />
+            </Card>
+          ))}
+          {errors.ingredients?.root?.message || errors.ingredients?.message ? (
+            <p role="alert" className="px-1 font-bold text-ink">
+              {errors.ingredients.root?.message ?? errors.ingredients.message}
+            </p>
+          ) : null}
+          {ingredients.fields.length < MAX_MEAL_PREP_INGREDIENTS && (
+            <button
+              type="button"
+              onClick={() => setPicking(true)}
+              className={cx(
+                'flex min-h-14 w-full items-center justify-between rounded-card border-2 border-dashed border-ink-muted px-5 text-left font-bold text-ink',
+                focusRing,
+                pressable,
+              )}
+            >
+              Agregar ingrediente
+              <Plus aria-hidden="true" className="size-6" />
+            </button>
+          )}
+        </section>
+
+        <Card radius="lg" className="space-y-4">
+          <h2 className="text-lg font-extrabold">Ya cocinado</h2>
+          <Input
+            label="Peso cocido (g)"
+            inputMode="decimal"
+            placeholder="Opcional"
+            hint="Pésalo todo junto al terminar, con la pesa tarada."
+            error={errors.cookedGrams?.message}
+            {...register('cookedGrams')}
+          />
+          <Input
+            label="Porciones"
+            inputMode="numeric"
+            placeholder="Opcional"
+            hint="Si lo dividiste en partes iguales, como tuppers."
+            error={errors.servings?.message}
+            {...register('servings')}
+          />
+        </Card>
+
+        <Summary control={control} />
+
+        {error}
+
+        <div className="fixed inset-x-0 bottom-0 bg-gradient-to-t from-bg via-bg to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="mx-auto max-w-md">
+            <Button type="submit" fullWidth disabled={isSubmitting}>
+              {isSubmitting ? 'Guardando…' : submitLabel}
+            </Button>
+          </div>
+        </div>
+      </form>
+
+      <IngredientSheet
+        open={picking}
+        onClose={() => setPicking(false)}
+        onPick={(food) => {
+          setPicking(false)
+          const index = ingredients.fields.length
+          ingredients.append(
+            {
+              foodId: food.id,
+              foodName: food.brand ? `${food.name} · ${food.brand}` : food.name,
+              per100: food.per100,
+              grams: '',
+            },
+            { shouldFocus: false },
+          )
+          // After the sheet gives focus back to its trigger.
+          requestAnimationFrame(() => setFocus(`ingredients.${index}.grams`))
+        }}
+      />
+    </main>
+  )
+}
+
+/** HU-17 CA5: totals, per 100 g cooked and per serving, while typing. */
+function Summary({ control }: { control: Control<MealPrepInput, unknown, MealPrepValues> }) {
+  const [fields, cookedText, servingsText] = useWatch({
+    control,
+    name: ['ingredients', 'cookedGrams', 'servings'],
+  })
+  const ingredients: RecipeIngredient[] = fields
+    .map((field) => ({ per100: field.per100, grams: decimalText.parse(field.grams) }))
+    .filter(({ grams }) => Number.isFinite(grams) && grams > 0)
+  if (ingredients.length === 0) return null
+
+  const cooked = decimalText.parse(cookedText)
+  const cookedGrams = Number.isFinite(cooked) && cooked > 0 ? cooked : null
+  const servings = Number(servingsText)
+  const prep = {
+    ingredients,
+    cookedGrams,
+    servings: Number.isInteger(servings) && servings > 0 ? servings : null,
+  }
+  const per100 = per100Cooked(prep)
+  const perServing = servingGrams(prep)
+
+  return (
+    <section aria-labelledby="summary-heading" aria-live="polite">
+      <Card radius="lg" className="space-y-3">
+        <h2 id="summary-heading" className="text-lg font-extrabold">
+          Resumen
+        </h2>
+        <SummaryRow label="Todo el lote" nutrients={totalNutrients(ingredients)} />
+        <SummaryRow label={cookedGrams ? 'Por 100 g cocidos' : 'Por 100 g'} nutrients={per100} />
+        {perServing !== null && (
+          <SummaryRow
+            label={`Por porción (${formatGrams(perServing)} g)`}
+            nutrients={nutrientsForGrams(per100, perServing)}
+          />
+        )}
+        {cookedGrams === null && (
+          <Note>
+            Sin peso cocido usamos el peso crudo ({formatGrams(batchGrams(prep))} g). Pésalo al
+            terminar para que sea exacto.
+          </Note>
+        )}
+        {cookedGrams !== null && cookedWeightLooksOff(ingredients, cookedGrams) && (
+          <Note>
+            Pesa más de 3 veces lo crudo ({formatGrams(rawGrams(ingredients))} g). ¿Taraste la pesa
+            con el recipiente?
+          </Note>
+        )}
+      </Card>
+    </section>
+  )
+}
+
+function SummaryRow({ label, nutrients }: { label: string; nutrients: Nutrients }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <span className="font-bold text-on-surface-muted">{label}</span>
+      <span className="text-right font-semibold tabular-nums">
+        <span className="font-extrabold">{formatKcal(nutrients.kcal)} kcal</span>
+        <span className="block text-sm text-on-surface-muted">
+          P {formatGrams(nutrients.protein)} · C {formatGrams(nutrients.carbs)} · G{' '}
+          {formatGrams(nutrients.fat)} g
+        </span>
+      </span>
+    </div>
+  )
+}
+
+function Note({ children }: { children: ReactNode }) {
+  return (
+    <p className="flex items-start gap-2 text-sm font-semibold text-on-surface-muted">
+      <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-accent" />
+      {children}
+    </p>
+  )
+}

@@ -15,7 +15,7 @@ export const MAX_PORTIONS = 10
 export const MAX_PORTION_GRAMS = 10000
 
 /** "12,5" or "12.5" as typed; empty or invalid becomes NaN, so it fails below. */
-const decimalText = z
+export const decimalText = z
   .string()
   .trim()
   .transform((value) =>
