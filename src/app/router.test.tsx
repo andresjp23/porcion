@@ -26,4 +26,14 @@ describe('router', () => {
       await screen.findByRole('heading', { name: 'Registra lo que comes en segundos' }),
     ).toBeInTheDocument()
   })
+
+  it.each([
+    ['/privacy', 'Política de privacidad'],
+    ['/terms', 'Términos'],
+  ])('opens %s without a session, marked as a draft (U-4)', async (path, title) => {
+    renderWithAuth(routes, { path })
+    expect(await screen.findByRole('heading', { level: 1, name: title })).toBeInTheDocument()
+    expect(screen.getByRole('note')).toHaveTextContent('Borrador no revisado legalmente')
+    expect(screen.getByText('Versión 2026-10')).toBeInTheDocument()
+  })
 })

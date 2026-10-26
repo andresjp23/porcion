@@ -236,6 +236,15 @@ describe('ProfilePage', () => {
     })
   })
 
+  it('links to the Privacy Policy and the Terms (HU-16 CA3)', async () => {
+    renderProfile()
+    expect(await screen.findByRole('link', { name: 'Política de privacidad' })).toHaveAttribute(
+      'href',
+      '/privacy',
+    )
+    expect(screen.getByRole('link', { name: 'Términos' })).toHaveAttribute('href', '/terms')
+  })
+
   it('signs out', async () => {
     renderProfile()
     await userEvent.click(await screen.findByRole('button', { name: 'Cerrar sesión' }))

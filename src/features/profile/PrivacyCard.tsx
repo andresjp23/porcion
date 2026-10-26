@@ -1,6 +1,8 @@
 import { Download } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { localDate } from '@/domain/dates'
+import { linkOnSurface } from '@/features/auth/styles'
 import { cx } from '@/lib/cx'
 import { downloadJson } from '@/lib/download'
 import { Button, Card } from '@/ui'
@@ -66,6 +68,15 @@ export function PrivacyCard({ timeZone, onExported }: PrivacyCardProps) {
       >
         Eliminar mi cuenta
       </button>
+      {/* HU-16 CA3 */}
+      <p className="mt-4 flex justify-center gap-6 text-sm">
+        <Link to="/privacy" className={linkOnSurface}>
+          Política de privacidad
+        </Link>
+        <Link to="/terms" className={linkOnSurface}>
+          Términos
+        </Link>
+      </p>
       <DeleteAccountSheet open={deleting} onClose={() => setDeleting(false)} />
     </Card>
   )
