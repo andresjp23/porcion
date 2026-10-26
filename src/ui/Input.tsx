@@ -1,7 +1,6 @@
 import { CircleAlert } from 'lucide-react'
 import { useId, type InputHTMLAttributes } from 'react'
 import { cx } from '@/lib/cx'
-import { focusRing } from './styles'
 
 type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> & {
   label: string
@@ -29,7 +28,9 @@ export function Input({ label, hint, error, className, ...props }: InputProps) {
         className={cx(
           'h-12 w-full rounded-field bg-surface-2 px-4 text-base font-bold text-on-surface placeholder:text-on-surface-muted',
           error ? 'border-2 border-on-surface' : 'border-2 border-transparent',
-          focusRing,
+          // focus-within, not focus-visible: Chrome moves focus through the day,
+          // month, year and calendar button inside a date field.
+          'outline-none focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2 focus-within:ring-offset-ink',
         )}
         {...props}
       />

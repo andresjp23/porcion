@@ -16,7 +16,8 @@ export function Checkbox({ label, error, className, ...props }: CheckboxProps) {
 
   return (
     <div className={cx('space-y-1', className)}>
-      <div className="flex min-h-11 items-start gap-3 py-1">
+      {/* The whole row is the label, so the 44 px touch target includes the box. */}
+      <label htmlFor={id} className="flex min-h-11 cursor-pointer items-start gap-3 py-2.5">
         <input
           id={id}
           type="checkbox"
@@ -25,10 +26,8 @@ export function Checkbox({ label, error, className, ...props }: CheckboxProps) {
           className={cx('mt-0.5 size-6 shrink-0 rounded accent-accent', focusRing)}
           {...props}
         />
-        <label htmlFor={id} className="text-base font-semibold text-on-surface">
-          {label}
-        </label>
-      </div>
+        <span className="text-base font-semibold text-on-surface">{label}</span>
+      </label>
       {error && (
         <p id={errorId} className="flex items-center gap-2 text-sm font-bold text-on-surface">
           <CircleAlert aria-hidden="true" className="size-4 shrink-0 text-accent" />

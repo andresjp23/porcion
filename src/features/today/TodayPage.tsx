@@ -221,7 +221,14 @@ function DayPicker({
         className="bg-transparent text-ink"
         onClick={() => onChange(addDays(date, -1))}
       />
-      <label className="relative font-bold text-ink-muted">
+      <label
+        className={cx(
+          'relative inline-flex min-h-11 items-center rounded-field px-1 font-bold text-ink-muted',
+          // The date input is invisible on top of the text, so the label shows its focus.
+          // focus-within: Chrome moves focus through the day, month and year inside it.
+          'focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2 focus-within:ring-offset-ink',
+        )}
+      >
         <span>{formatDay(date)}</span>
         <input
           type="date"
@@ -231,7 +238,7 @@ function DayPicker({
           onChange={(event) => {
             if (event.target.value) onChange(event.target.value)
           }}
-          className={cx('absolute inset-0 cursor-pointer opacity-0', focusRing)}
+          className="absolute inset-0 cursor-pointer opacity-0 outline-none"
         />
       </label>
       <IconButton

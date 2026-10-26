@@ -57,7 +57,7 @@ export function Stepper({ label, value, onChange, step, min = 0, unit }: Stepper
             if (event.key === 'Enter') commit()
           }}
           className={cx(
-            'w-28 rounded-field bg-transparent text-center text-4xl font-extrabold text-on-surface',
+            'h-12 w-28 rounded-field bg-transparent text-center text-4xl font-extrabold text-on-surface',
             focusRing,
           )}
         />
