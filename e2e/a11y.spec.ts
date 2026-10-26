@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
-import { createReadyUser, signIn } from './accounts'
+import { createReadyUser, signIn, waitForOfflineCopy } from './accounts'
 
 // Q-2: WCAG 2.1 A and AA rules (axe), touch targets and visible focus on every
 // main screen (docs/spec.md §7, CLAUDE.md).
@@ -85,6 +85,8 @@ test.describe('signed in', () => {
     ['/profile/data', 'Tus datos'],
     ['/foods/new', 'Nuevo alimento'],
     ['/scan', 'Escanear'],
+    ['/meal-prep', 'Meal prep'],
+    ['/meal-prep/new', 'Nuevo meal prep'],
   ]
   for (const [path, heading] of screens) {
     test(`${path} has no WCAG violations`, async ({ page }) => {
@@ -128,6 +130,38 @@ test.describe('with content and open sheets', () => {
     await lunch.getByRole('button', { name: /^Almuerzo/ }).click()
     await lunch.getByRole('button', { name: /^Marraqueta 100 g/ }).click()
     await page.getByRole('dialog').waitFor()
+    await expectNoViolations(page)
+  })
+
+  test('meal prep: the form, the ingredient sheet, the batch and its log sheet', async ({
+    page,
+  }) => {
+    const { email } = await createReadyUser('a11y-meal-prep')
+    await signIn(page, email)
+    await page.goto('/meal-prep/new')
+    await page.getByLabel('Nombre').fill('Arroz de la semana')
+    await page.getByRole('button', { name: 'Agregar ingrediente' }).click()
+    const sheet = page.getByRole('dialog', { name: 'Agregar ingrediente' })
+    await sheet.getByLabel('Buscar ingrediente').fill('arroz crudo')
+    await sheet.getByRole('button', { name: /^Arroz crudo/ }).waitFor()
+    await expectNoViolations(page)
+
+    await sheet.getByRole('button', { name: /^Arroz crudo/ }).click()
+    await page.getByLabel('Gramos de Arroz crudo').fill('200')
+    await page.getByLabel('Peso cocido (g)').fill('600')
+    await page.getByRole('region', { name: 'Resumen' }).waitFor()
+    await expectNoViolations(page)
+    await expectTouchTargets(page)
+
+    await page.getByRole('button', { name: 'Guardar meal prep' }).click()
+    await page.getByRole('heading', { name: 'Arroz de la semana' }).waitFor()
+    await expectNoViolations(page)
+    await expectTouchTargets(page)
+
+    await waitForOfflineCopy(page, 'Arroz de la semana')
+    await page.goto('/add?meal=lunch')
+    await page.getByRole('button', { name: /Arroz de la semana/ }).click()
+    await page.getByRole('dialog', { name: 'Arroz de la semana' }).waitFor()
     await expectNoViolations(page)
   })
 

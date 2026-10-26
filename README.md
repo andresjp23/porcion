@@ -8,19 +8,20 @@ Registra lo que comes, tus calorías y macros, y sigue tu peso. Una PWA pensada 
   <img src=".github/readme/registrar.gif" width="300" alt="Registrar una comida en dos toques desde Hoy: se abre Agregar, se toca el + de Marraqueta y Hoy suma sus calorías">
 </p>
 
-| Hoy | Agregar | Detalle | Progreso | Lista de compras | Perfil |
-|---|---|---|---|---|---|
-| <img src=".github/readme/hoy.png" width="160" alt="Hoy: anillo con las calorías restantes, macros del día y las cuatro comidas"> | <img src=".github/readme/agregar.png" width="160" alt="Agregar alimento con la pestaña Recientes"> | <img src=".github/readme/detalle.png" width="160" alt="Detalle de un alimento con porciones y cantidad"> | <img src=".github/readme/progreso.png" width="160" alt="Progreso: tendencia del peso y calorías de la semana"> | <img src=".github/readme/lista.png" width="160" alt="Lista de compras con ítems marcados y el botón Modo supermercado"> | <img src=".github/readme/perfil.png" width="160" alt="Perfil con la meta diaria y los macros"> |
+| Hoy | Agregar | Detalle | Meal prep | Progreso | Lista de compras | Perfil |
+|---|---|---|---|---|---|---|
+| <img src=".github/readme/hoy.png" width="160" alt="Hoy: anillo con las calorías restantes, macros del día y las cuatro comidas"> | <img src=".github/readme/agregar.png" width="160" alt="Agregar alimento con la pestaña Recientes"> | <img src=".github/readme/detalle.png" width="160" alt="Detalle de un alimento con porciones y cantidad"> | <img src=".github/readme/meal-prep.png" width="160" alt="Meal prep de pollo a la plancha: quedan 1.020 g y 4 porciones, con lo que aporta por 100 g cocidos y por porción"> | <img src=".github/readme/progreso.png" width="160" alt="Progreso: tendencia del peso y calorías de la semana"> | <img src=".github/readme/lista.png" width="160" alt="Lista de compras con ítems marcados y el botón Modo supermercado"> | <img src=".github/readme/perfil.png" width="160" alt="Perfil con la meta diaria y los macros"> |
 
 ## Qué hace
 
 - **Meta diaria a tu medida.** Un onboarding de 5 pasos calcula tu meta con Mifflin-St Jeor y sugiere macros. La meta y los macros se pueden fijar a mano, por separado, y volver a lo sugerido cuando quieras.
 - **Registrar en dos toques.** Busca sin preocuparte de las tildes ni de los errores de tipeo, o elige entre tus recientes y favoritos. También puedes repetir lo que comiste ayer.
+- **Meal prep.** Anota lo que cocinas para la semana con los ingredientes en crudo (buscados o escaneados) y el peso ya cocinado. La app calcula cuánto aporta lo que te sirves, cocido, y descuenta de lo que queda hasta que se termina. Desde el día 4 recuerda revisar que siga bien.
 - **Escáner de código de barras.** Busca primero en la base propia y después en Open Food Facts. Si el producto no existe, lo creas con los datos de su etiqueta y queda para todos.
 - **Modo supermercado.** Escanea mientras compras: cada producto se marca en tu lista, y los que no tienen tabla nutricional quedan en "Por completar".
 - **Progreso.** Tendencia del peso (media móvil exponencial) y las calorías de la semana contra tu meta.
 - **Tus datos son tuyos.** Puedes descargar todo en JSON o eliminar tu cuenta desde Perfil.
-- **Sin conexión.** Hoy, tus recientes y tus favoritos se pueden ver sin red.
+- **Sin conexión.** Hoy, tus recientes, tus favoritos y tus meal prep se pueden ver sin red.
 - **Sin culpa.** Superar la meta se muestra en un tono neutro: nada de rojo ni de "¡te pasaste!".
 
 ## Stack
@@ -73,6 +74,7 @@ e2e/          flujos de Playwright y revisión de accesibilidad
 - **Valores por 100 g, porciones en gramos.** Los nutrientes se guardan siempre por 100 g (o 100 ml), y "1 marraqueta" es una equivalencia de 100 g. Los valores se redondean solo al mostrarlos.
 - **Una base compartida con control de calidad.** Lo que crea la comunidad queda visible para todos de inmediato, pero solo su autor lo puede editar, durante 24 h o mientras nadie más lo haya registrado. El autor no se muestra a nadie. Con 3 reportes, el alimento muestra "Datos en revisión".
 - **Búsqueda tolerante en Postgres.** `unaccent` y `pg_trgm` ordenan por prefijo exacto, luego por similitud, luego por alimento verificado y al final por tu propio uso.
+- **Meal prep: al cocinar cambia el peso, no las calorías.** La pechuga pierde agua y el arroz la absorbe, así que los valores de una etiqueta en crudo no sirven para lo que pesas cocido. Un lote suma sus ingredientes crudos y divide por su peso cocido. Lo que queda no se guarda: se calcula desde los gramos registrados, así editar o borrar un registro nunca deja un contador desfasado.
 - **Gráficos en SVG propio.** Son dos gráficos simples, así que no se justificaba una librería. Así usan los colores del sistema visual, y cada uno trae una tabla oculta con sus datos para lectores de pantalla.
 - **Caché sin conexión separada por usuario.** Solo se guarda lo que hay que poder leer sin red, con una clave por usuario que se borra al cerrar sesión.
 - **Accesibilidad verificada en CI.** axe (WCAG 2.1 AA), áreas táctiles de 44 px y foco visible al navegar con teclado, en todas las pantallas principales.

@@ -4,7 +4,8 @@ import { z } from 'zod'
  * Version of the Terms and Privacy Policy the user accepts (HU-01 CA2). Bump it
  * when the policy changes; the server stamps the acceptance time.
  */
-export const PRIVACY_VERSION = '2026-10'
+// 2026-10-26: adds meal prep (MP-6).
+export const PRIVACY_VERSION = '2026-10-26'
 
 /** Both boxes must be ticked; they are not stored, only the policy version is. */
 export const consentSchema = z.object({

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import type { Page } from '@playwright/test'
+import { expect, type Page } from '@playwright/test'
+import { PRIVACY_VERSION } from '../src/features/auth/consent'
 import type { Database } from '../src/lib/database.types'
 
 export const PASSWORD = 'e2e-password-123'
@@ -30,7 +31,7 @@ export async function createReadyUser(name: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password: PASSWORD,
-    options: { data: { privacy_version: '2026-10' } },
+    options: { data: { privacy_version: PRIVACY_VERSION } },
   })
   if (error || !data.user) throw error ?? new Error('Sign-up returned no user')
   const userId = data.user.id
@@ -66,4 +67,24 @@ export async function signIn(page: Page, email: string) {
   await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
   await page.getByRole('button', { name: 'Ingresar', exact: true }).click()
   await page.waitForURL('/')
+}
+
+/**
+ * The offline copy (Q-3) is saved at most once a second and counts as fresh for
+ * 30 s, so a reload right after a change could restore the copy from before it.
+ * Waits until the copy has `text` before reloading.
+ */
+export async function waitForOfflineCopy(page: Page, text: string) {
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (wanted) =>
+          Object.keys(localStorage).some(
+            (key) =>
+              key.startsWith('porcion-offline:') && localStorage.getItem(key)?.includes(wanted),
+          ),
+        text,
+      ),
+    )
+    .toBe(true)
 }

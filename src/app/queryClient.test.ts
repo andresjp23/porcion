@@ -12,6 +12,7 @@ describe('isOfflineReadable', () => {
     expect(isOfflineReadable(['logs', 'any'])).toBe(true)
     expect(isOfflineReadable(['foods', 'recent'])).toBe(true)
     expect(isOfflineReadable(['foods', 'favorites'])).toBe(true)
+    expect(isOfflineReadable(['meal-preps'])).toBe(true)
   })
 
   it('leaves out searches and the rest', () => {

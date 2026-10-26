@@ -34,8 +34,9 @@ export function PrivacyPage() {
             fecha.
           </li>
           <li>
-            <strong>Tu uso de la app:</strong> tus pesos, lo que registras en cada comida, tus
-            favoritos, tus listas de compras y los reportes de errores que envías.
+            <strong>Tu uso de la app:</strong> tus pesos, lo que registras en cada comida, tus meal
+            prep (lo que cocinaste, con sus ingredientes y pesos), tus favoritos, tus listas de
+            compras y los reportes de errores que envías.
           </li>
           <li>
             <strong>Los alimentos que creas:</strong> quedan en la base compartida para que todos
@@ -52,8 +53,12 @@ export function PrivacyPage() {
         <h2>En tu teléfono</h2>
         <p>
           Para que puedas abrir la app sin conexión, tu navegador guarda una copia de tu perfil, tu
-          día y tus alimentos recientes y favoritos. Solo la ve tu cuenta y se borra al cerrar
-          sesión.
+          día, tus meal prep y tus alimentos recientes y favoritos. Solo la ve tu cuenta y se borra
+          al cerrar sesión.
+        </p>
+        <p>
+          Si escaneas un ingrediente mientras armas un meal prep, el navegador guarda lo que
+          llevabas escrito para no perderlo, solo hasta que cierras la pestaña.
         </p>
       </section>
 
@@ -95,8 +100,8 @@ export function PrivacyPage() {
           </li>
           <li>
             <strong>Supresión:</strong> elimina tu cuenta. Se borran tu perfil, tus registros, tus
-            pesos, tus favoritos y tus listas. Los alimentos que creaste se quedan en la base, sin
-            autor.
+            pesos, tus meal prep, tus favoritos y tus listas. Los alimentos que creaste se quedan en
+            la base, sin autor.
           </li>
         </ul>
         <p>

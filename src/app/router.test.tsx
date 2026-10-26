@@ -40,6 +40,6 @@ describe('router', () => {
     renderWithAuth(routes, { path })
     expect(await screen.findByRole('heading', { level: 1, name: title })).toBeInTheDocument()
     expect(screen.getByRole('note')).toHaveTextContent('Borrador no revisado legalmente')
-    expect(screen.getByText('Versión 2026-10')).toBeInTheDocument()
+    expect(screen.getByText(`Versión ${PRIVACY_VERSION}`)).toBeInTheDocument()
   })
 })

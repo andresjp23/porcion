@@ -21,8 +21,8 @@ export function createQueryClient() {
 
 /**
  * Q-3 (docs/spec.md §7): what stays readable without a connection. Hoy (the
- * profile with the target and the day's logs) and the recents and favorites of
- * Agregar alimento. Searches and everything else need the network.
+ * profile with the target and the day's logs), and the recents, favorites and
+ * meal preps of Agregar alimento. Searches and everything else need the network.
  */
 export function isOfflineReadable(queryKey: QueryKey) {
   const [root, sub] = queryKey
@@ -30,7 +30,9 @@ export function isOfflineReadable(queryKey: QueryKey) {
     root === 'profile' ||
     root === 'day' ||
     (root === 'logs' && sub === 'any') ||
-    (root === 'foods' && (sub === 'recent' || sub === 'favorites'))
+    (root === 'foods' && (sub === 'recent' || sub === 'favorites')) ||
+    // MP-6: Agregar shows the active batches, also without a connection.
+    root === 'meal-preps'
   )
 }
 
