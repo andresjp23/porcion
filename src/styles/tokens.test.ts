@@ -1,8 +1,11 @@
 /// <reference types="node" />
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
+
+// docs/ is local only (.gitignore), so CI checks the CSS without the table.
+const UI_DOC = 'docs/ui.md'
+const hasUiDoc = existsSync(UI_DOC)
 
 // Read from disk: Vitest stubs CSS imports, so `?raw` would come back empty.
-const uiDoc = readFileSync('docs/ui.md', 'utf8')
 const tokensCss = readFileSync('src/styles/tokens.css', 'utf8')
 
 function parseDocTokens(markdown: string) {
@@ -16,8 +19,8 @@ function parseCssTokens(css: string) {
 }
 
 describe('design tokens', () => {
-  it('match the color table in docs/ui.md', () => {
-    const docTokens = parseDocTokens(uiDoc)
+  it.skipIf(!hasUiDoc)('match the color table in docs/ui.md', () => {
+    const docTokens = parseDocTokens(readFileSync(UI_DOC, 'utf8'))
     expect(Object.keys(docTokens).length).toBeGreaterThan(0)
     expect(parseCssTokens(tokensCss)).toEqual(docTokens)
   })
