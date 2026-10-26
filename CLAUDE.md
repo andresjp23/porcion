@@ -83,6 +83,8 @@ Frontend en Vercel (`vercel.json`) y backend en un proyecto de Supabase. Una vez
 
 Después, cada push a `main` despliega solo. Las migraciones nuevas van con `supabase db push`.
 
+**Versión:** Perfil muestra `Versión x.y.z · <commit>`. Antes de publicar un cambio, subirla con `npm version patch --no-git-tag-version` (arreglos) o `minor` (funcionalidades).
+
 ## Estructura de carpetas
 
 ```

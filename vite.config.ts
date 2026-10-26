@@ -1,4 +1,6 @@
 /// <reference types="vitest/config" />
+import { execSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
@@ -8,7 +10,25 @@ import { VitePWA } from 'vite-plugin-pwa'
 // Mirrors the --color-bg token in docs/ui.md.
 const BONE = '#F3F1EA'
 
+// M-3: Perfil shows the version and the commit it was built from. Vercel
+// passes the commit; locally it comes from git (empty if git is missing).
+const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
+
+function buildCommit() {
+  const sha = process.env.VERCEL_GIT_COMMIT_SHA
+  if (sha) return sha.slice(0, 7)
+  try {
+    return execSync('git rev-parse --short=7 HEAD', { encoding: 'utf8' }).trim()
+  } catch {
+    return ''
+  }
+}
+
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+    __APP_COMMIT__: JSON.stringify(buildCommit()),
+  },
   plugins: [
     react(),
     tailwindcss(),

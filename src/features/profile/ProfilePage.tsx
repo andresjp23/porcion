@@ -18,6 +18,7 @@ import { activityOptions, goalOptions, sexOptions } from '@/features/onboarding/
 import { classifyTarget, targetInputFrom } from '@/features/onboarding/target'
 import type { Tables } from '@/lib/database.types'
 import { cx } from '@/lib/cx'
+import { appVersionLabel } from '@/lib/appVersion'
 import { formatKcal, formatKg } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import { BottomNav, Button, buttonClasses, Card, Toast } from '@/ui'
@@ -80,6 +81,8 @@ export function ProfilePage() {
         >
           Cerrar sesión
         </Button>
+
+        <p className="text-center text-sm font-semibold text-ink-soft">{appVersionLabel()}</p>
       </main>
       {notice && <Toast message={notice} onDismiss={dismissNotice} />}
       <BottomNav />
