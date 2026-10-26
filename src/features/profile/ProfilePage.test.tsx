@@ -8,6 +8,7 @@ import {
   queueRpcResult,
   setTableDefault,
 } from '@/test/supabaseMock'
+import { AccountDeletedPage } from './AccountDeletedPage'
 import { ProfileDataPage } from './ProfileDataPage'
 import { ProfilePage } from './ProfilePage'
 
@@ -50,6 +51,7 @@ function renderProfile(
     [
       { path: '/profile', element: <ProfilePage /> },
       { path: '/profile/data', element: <ProfileDataPage /> },
+      { path: '/account-deleted', element: <AccountDeletedPage /> },
     ],
     { path, session: signedInSession },
   )
@@ -190,6 +192,48 @@ describe('ProfilePage', () => {
     queueRpcResult('export_my_data', { data: null, error: { message: 'offline' } })
     await userEvent.click(await screen.findByRole('button', { name: 'Descargar mis datos' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos preparar tus datos')
+  })
+
+  describe('delete account (HU-16 CA2)', () => {
+    async function openDelete() {
+      renderProfile()
+      await userEvent.click(await screen.findByRole('button', { name: 'Eliminar mi cuenta' }))
+      return within(await screen.findByRole('dialog', { name: 'Eliminar tu cuenta' }))
+    }
+
+    it('asks for the written confirmation first', async () => {
+      const sheet = await openDelete()
+      await userEvent.type(sheet.getByLabelText('Escribe ELIMINAR para confirmar'), 'borrar')
+      await userEvent.click(sheet.getByRole('button', { name: 'Eliminar mi cuenta' }))
+      expect(
+        await sheet.findByText('Escribe ELIMINAR para confirmar', { selector: 'p, span' }),
+      ).toBeInTheDocument()
+      expect(mock.functions.invoke).not.toHaveBeenCalled()
+    })
+
+    it('deletes the account, signs out locally and says goodbye', async () => {
+      vi.mocked(mock.functions.invoke).mockResolvedValue({ data: { deleted: true }, error: null })
+      const sheet = await openDelete()
+      await userEvent.type(sheet.getByLabelText('Escribe ELIMINAR para confirmar'), 'eliminar ')
+      await userEvent.click(sheet.getByRole('button', { name: 'Eliminar mi cuenta' }))
+
+      expect(mock.functions.invoke).toHaveBeenCalledWith('delete-account', {
+        body: { confirmation: 'ELIMINAR' },
+      })
+      expect(
+        await screen.findByRole('heading', { name: 'Eliminamos tu cuenta' }),
+      ).toBeInTheDocument()
+      expect(mock.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
+    })
+
+    it('keeps the account and says so when the deletion fails', async () => {
+      vi.mocked(mock.functions.invoke).mockResolvedValue({ data: null, error: new Error('500') })
+      const sheet = await openDelete()
+      await userEvent.type(sheet.getByLabelText('Escribe ELIMINAR para confirmar'), 'ELIMINAR')
+      await userEvent.click(sheet.getByRole('button', { name: 'Eliminar mi cuenta' }))
+      expect(await sheet.findByRole('alert')).toHaveTextContent('No pudimos eliminar tu cuenta')
+      expect(mock.auth.signOut).not.toHaveBeenCalled()
+    })
   })
 
   it('signs out', async () => {

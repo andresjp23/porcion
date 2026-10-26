@@ -83,6 +83,9 @@ export const supabase = {
     resetPasswordForEmail: vi.fn(),
     updateUser: vi.fn(),
   },
+  functions: {
+    invoke: vi.fn(),
+  },
   from: vi.fn(builder),
   // RPC results share the table queues under the key `rpc:<fn>`.
   rpc: vi.fn<(fn: string, args?: unknown) => ReturnType<typeof builder>>((fn) =>

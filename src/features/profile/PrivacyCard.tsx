@@ -1,19 +1,23 @@
 import { Download } from 'lucide-react'
 import { useState } from 'react'
 import { localDate } from '@/domain/dates'
+import { cx } from '@/lib/cx'
 import { downloadJson } from '@/lib/download'
 import { Button, Card } from '@/ui'
+import { focusRing, pressable } from '@/ui/styles'
 import { exportMyData } from './api'
+import { DeleteAccountSheet } from './DeleteAccountSheet'
 
 type PrivacyCardProps = {
   timeZone: string
   onExported: (notice: string) => void
 }
 
-/** HU-16: the user's rights over their data. CA1, the export, for now. */
+/** HU-16: the user's rights over their data: export it (CA1) or delete the account (CA2). */
 export function PrivacyCard({ timeZone, onExported }: PrivacyCardProps) {
   const [exporting, setExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   async function download() {
     setError(null)
@@ -51,6 +55,18 @@ export function PrivacyCard({ timeZone, onExported }: PrivacyCardProps) {
       >
         {exporting ? 'Preparando…' : 'Descargar mis datos'}
       </Button>
+      <button
+        type="button"
+        onClick={() => setDeleting(true)}
+        className={cx(
+          'mt-3 min-h-11 w-full rounded-pill font-extrabold text-on-surface underline underline-offset-4',
+          focusRing,
+          pressable,
+        )}
+      >
+        Eliminar mi cuenta
+      </button>
+      <DeleteAccountSheet open={deleting} onClose={() => setDeleting(false)} />
     </Card>
   )
 }

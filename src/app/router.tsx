@@ -10,6 +10,7 @@ import { EditFoodPage } from '@/features/foods/EditFoodPage'
 import { FoodDetailPage } from '@/features/foods/FoodDetailPage'
 import { FoodsPage } from '@/features/foods/FoodsPage'
 import { OnboardingPage } from '@/features/onboarding/OnboardingPage'
+import { AccountDeletedPage } from '@/features/profile/AccountDeletedPage'
 import { ProfileDataPage } from '@/features/profile/ProfileDataPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { ProgressPage } from '@/features/progress/ProgressPage'
@@ -33,6 +34,7 @@ export const routes: RouteObject[] = [
   { path: '/signup', element: <SignupPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/reset-password', element: <ResetPasswordPage /> },
+  { path: '/account-deleted', element: <AccountDeletedPage /> },
 
   // A-4: each group is only reachable at its stage of the funnel.
   {
