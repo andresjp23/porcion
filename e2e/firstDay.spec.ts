@@ -38,7 +38,7 @@ test('a new user signs up, sets a target and logs a meal', async ({ page }) => {
   await page.getByRole('link', { name: 'Agregar a Almuerzo' }).click()
   await page.getByPlaceholder('Buscar alimento').fill('marraqueta')
   await page.getByRole('button', { name: 'Agregar Marraqueta', exact: true }).click()
-  await expect(page.getByRole('status')).toContainText('Marraqueta')
+  await expect(page.getByRole('status').filter({ hasText: 'Marraqueta' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Volver' }).click()
   await expect(page.getByRole('img', { name: '272 de 2.240 kcal' })).toBeVisible()

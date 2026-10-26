@@ -4,6 +4,9 @@ import { afterEach } from 'vitest'
 
 afterEach(() => {
   cleanup()
+  // AuthProvider keeps an offline copy of the cache there (Q-3): one test's
+  // data must not be restored into the next.
+  localStorage.clear()
 })
 
 // jsdom does not implement <dialog> methods yet.

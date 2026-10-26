@@ -49,6 +49,15 @@ export function PrivacyPage() {
       </section>
 
       <section>
+        <h2>En tu teléfono</h2>
+        <p>
+          Para que puedas abrir la app sin conexión, tu navegador guarda una copia de tu perfil, tu
+          día y tus alimentos recientes y favoritos. Solo la ve tu cuenta y se borra al cerrar
+          sesión.
+        </p>
+      </section>
+
+      <section>
         <h2>Para qué los usamos</h2>
         <p>
           Solo para que la app funcione: calcular tu meta, mostrarte tu día y tu progreso, y guardar
