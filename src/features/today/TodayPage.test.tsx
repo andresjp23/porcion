@@ -288,10 +288,10 @@ describe('TodayPage', () => {
       renderToday()
 
       const breakfast = await screen.findByRole('region', { name: 'Desayuno' })
-      const repeat = await within(breakfast).findByRole('button', { name: 'Repetir lo de ayer' })
-      expect(repeat).toHaveAccessibleDescription('Marraqueta, Palta Hass · 339 kcal')
+      const repeat = await within(breakfast).findByRole('button', { name: 'Repetir ayer' })
+      expect(repeat).toHaveAccessibleDescription('339 kcal · Marraqueta, Palta Hass')
       // Lunch has logs and dinner had nothing yesterday.
-      expect(screen.getAllByRole('button', { name: 'Repetir lo de ayer' })).toHaveLength(1)
+      expect(screen.getAllByRole('button', { name: 'Repetir ayer' })).toHaveLength(1)
 
       await userEvent.click(repeat)
       expect(mock.rpc).toHaveBeenCalledWith('copy_meal', {
@@ -305,7 +305,7 @@ describe('TodayPage', () => {
       givenDays([], yesterdayBreakfast)
       renderToday('/?date=2026-10-21')
       await screen.findByRole('heading', { name: 'Ayer' })
-      expect(screen.queryByRole('button', { name: 'Repetir lo de ayer' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Repetir ayer' })).not.toBeInTheDocument()
     })
   })
 

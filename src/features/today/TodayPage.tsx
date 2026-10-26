@@ -449,25 +449,37 @@ function RepeatYesterday({
   const kcal = sumNutrients(yesterday.map((entry) => entry.nutrients)).kcal
   const foods = [...new Set(yesterday.map((entry) => entry.foodName))].join(', ')
 
+  // A single chip (M-2): every empty meal may show one, so it stays small.
   return (
-    <div className="mt-3 space-y-2 border-t border-surface-2 pt-3">
-      <Button
-        variant="secondary"
-        size="md"
-        fullWidth
-        className="bg-surface-2"
-        icon={<Repeat aria-hidden="true" className="size-5 text-accent" />}
+    <div className="mt-2">
+      <button
+        type="button"
+        aria-label={copy.isPending ? 'Repitiendo…' : 'Repetir ayer'}
         aria-describedby={summaryId}
         disabled={copy.isPending}
         onClick={() => copy.mutate({ fromDate: addDays(date, -1), meal })}
+        className={cx(
+          'inline-flex h-11 max-w-full items-center gap-1.5 rounded-chip bg-surface-2 px-3 text-sm',
+          focusRing,
+          pressable,
+        )}
       >
-        {copy.isPending ? 'Repitiendo…' : 'Repetir lo de ayer'}
-      </Button>
-      <p id={summaryId} className="text-center text-sm font-semibold text-on-surface-muted">
-        {copy.isError
-          ? `No pudimos repetir ${label.toLowerCase()}. Inténtalo de nuevo.`
-          : `${foods} · ${formatKcal(kcal)} kcal`}
-      </p>
+        <Repeat aria-hidden="true" className="size-4 shrink-0 text-accent" />
+        <span className="shrink-0 font-extrabold">
+          {copy.isPending ? 'Repitiendo…' : 'Repetir ayer'}
+        </span>
+        <span aria-hidden="true" className="text-on-surface-muted">
+          ·
+        </span>
+        <span id={summaryId} className="truncate font-semibold text-on-surface-muted">
+          {formatKcal(kcal)} kcal · {foods}
+        </span>
+      </button>
+      {copy.isError && (
+        <p role="alert" className="mt-1 text-sm font-semibold text-on-surface-muted">
+          No pudimos repetir {label.toLowerCase()}. Inténtalo de nuevo.
+        </p>
+      )}
     </div>
   )
 }
