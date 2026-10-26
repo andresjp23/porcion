@@ -138,6 +138,12 @@ describe('renderSeedSql', () => {
     const sql = renderSeedSql({ foods, portions: [] })
     expect(sql).toContain("'Naranja d''Agen', '{}', 'g', 47, 0.91, 9.8, 0.15, 'seed', true, null")
   })
+
+  it('skips rows already loaded, so it can run again in production', () => {
+    const { foods } = build(['naranja,Naranja,,g,47,0.91,9.8,0.15,fdc:746771,cc0,Oranges,'])
+    const sql = renderSeedSql({ foods, portions: [] })
+    expect(sql.match(/on conflict \(id\) do nothing;/g)).toHaveLength(2)
+  })
 })
 
 describe('data/', () => {

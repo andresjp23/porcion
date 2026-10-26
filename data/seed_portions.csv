@@ -98,3 +98,16 @@ jugo-naranja,1 taza,248,false,fdc:169098
 bebida-cola,1 vaso (200 ml),200,true,medida
 bebida-cola,1 lata (350 ml),350,false,medida
 cafe,1 taza,237,true,fdc:171890
+pechuga-pollo-cruda,1 pechuga,272,true,fdc:171077
+trutro-pollo-crudo,1 trutro corto sin piel,149,true,fdc:173627
+carne-molida-cruda,1 porción (100 g),100,true,medida
+posta-cruda,1 porción (100 g),100,true,medida
+salmon-crudo,1 porción (100 g),100,true,medida
+arroz-crudo,1 taza,185,true,fdc:168877
+fideos-crudos,1 porción (57 g),57,true,fdc:169736
+porotos-secos,1 taza,195,true,fdc:175189
+lentejas-secas,1 taza,192,true,fdc:172420
+lentejas-secas,1 cucharada,12,false,fdc:172420
+garbanzos-secos,1 taza,200,true,fdc:173756
+papa-cruda,1 papa mediana,213,true,fdc:170026
+papa-cruda,1 papa grande,369,false,fdc:170026

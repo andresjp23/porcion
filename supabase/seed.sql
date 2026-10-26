@@ -3,20 +3,30 @@
 --
 -- Sources: USDA FoodData Central (CC0), "FAO y Ministerio de Salud de Chile 2010"
 -- (non-commercial use only, licencia nc) and recipes in data/recipes.
+--
+-- Safe to run again: rows already loaded are skipped (by their stable id), so
+-- production gets new foods with `psql -f supabase/seed.sql`. Changed values
+-- of an existing food are not updated.
 --   pan-molde-blanco: fdc:325871 (cc0)
 --   pan-molde-integral: fdc:335240 (cc0)
 --   marraqueta: fdc:172675 (cc0)
 --   arroz-blanco-cocido: fdc:168878 (cc0)
+--   arroz-crudo: fdc:168877 (cc0)
 --   fideos-cocidos: fdc:169737 (cc0)
+--   fideos-crudos: fdc:169736 (cc0)
 --   avena: fdc:2346396 (cc0)
 --   quinoa-cocida: fdc:168917 (cc0)
 --   harina-trigo: fdc:789890 (cc0)
 --   papa-cocida: fdc:170440 (cc0)
+--   papa-cruda: fdc:170026 (cc0)
 --   papas-fritas: fdc:170698 (cc0)
 --   choclo: fdc:169999 (cc0)
 --   porotos-cocidos: fdc:173736 (cc0)
+--   porotos-secos: fdc:175189 (cc0)
 --   lentejas-cocidas: fdc:172421 (cc0)
+--   lentejas-secas: fdc:172420 (cc0)
 --   garbanzos-cocidos: fdc:173757 (cc0)
+--   garbanzos-secos: fdc:173756 (cc0)
 --   leche-entera: fdc:322892 (cc0)
 --   leche-descremada: fdc:322559 (cc0)
 --   yogur-natural: fdc:2259793 (cc0)
@@ -25,15 +35,20 @@
 --   huevo: fdc:748967 (cc0)
 --   huevo-duro: fdc:173424 (cc0)
 --   pechuga-pollo-cocida: fdc:171477 (cc0)
+--   pechuga-pollo-cruda: fdc:171077 (cc0)
 --   trutro-pollo-cocido: fdc:172388 (cc0)
+--   trutro-pollo-crudo: fdc:173627 (cc0)
 --   carne-molida-cocida: fdc:174031 (cc0)
+--   carne-molida-cruda: fdc:2514743 (cc0)
 --   posta-cocida: fdc:170635 (cc0)
+--   posta-cruda: fdc:746760 (cc0)
 --   lomo-cerdo-cocido: fdc:168250 (cc0)
 --   jamon-cerdo: fdc:332397 (cc0)
 --   pechuga-pavo: minsal2010:F21 (nc)
 --   vienesa: fdc:172968 (cc0)
 --   atun-agua: fdc:334194 (cc0)
 --   salmon-cocido: fdc:175168 (cc0)
+--   salmon-crudo: fdc:2684441 (cc0)
 --   palta: fdc:2710824 (cc0)
 --   platano: fdc:790991 (cc0)
 --   manzana: fdc:1105781 (cc0)
@@ -77,16 +92,22 @@ values
   ('eb76aba3-e854-5756-9c43-c68bc6f44332', 'Pan de molde integral', array['pan integral'], 'g', 254, 12.3, 37.1, 3.55, 'seed', true, null),
   ('551897d8-7b1e-5943-a2d6-a00e6b49df1b', 'Marraqueta', array['pan batido', 'pan francés', 'pan'], 'g', 272, 10.75, 49.68, 2.42, 'seed', true, null),
   ('c3aa7862-d206-5a19-9b1f-0317540dc65e', 'Arroz blanco cocido', array['arroz'], 'g', 130, 2.69, 27.77, 0.28, 'seed', true, null),
+  ('843de89d-894c-53a9-a02b-e0c9fcf8fb9e', 'Arroz crudo', array['arroz', 'arroz blanco'], 'g', 365, 7.13, 78.65, 0.66, 'seed', true, null),
   ('b36d2bc3-1a13-59c4-b7c0-6c235492ac72', 'Fideos cocidos', array['pasta', 'tallarines', 'spaghetti'], 'g', 158, 5.8, 29.06, 0.93, 'seed', true, null),
+  ('cc1e994b-6cb3-593b-a0fe-0de818fc250d', 'Fideos crudos', array['fideos secos', 'pasta seca', 'tallarines'], 'g', 371, 13.04, 71.47, 1.51, 'seed', true, null),
   ('a2eff85b-b613-5cec-a085-9ca895db7e1e', 'Avena', array['avena en hojuelas', 'copos de avena'], 'g', 381.63, 13.5, 68.66, 5.89, 'seed', true, null),
   ('6345af91-eb9c-5be7-bf3c-5790ae38c308', 'Quínoa cocida', array['quinoa', 'quinua'], 'g', 120, 4.4, 18.5, 1.92, 'seed', true, null),
   ('43fe00a0-1361-586d-8e11-cbd5ea6827ef', 'Harina de trigo', array['harina'], 'g', 366, 10.9, 77.3, 1.48, 'seed', true, null),
   ('6510eabf-a5f0-5970-9204-1a8b25c5926c', 'Papa cocida', array['papa', 'patata'], 'g', 86, 1.71, 18.21, 0.1, 'seed', true, null),
+  ('54b7d5a0-5c65-5358-8373-0e3bacb8a9f4', 'Papa cruda', array['papa', 'patata'], 'g', 77, 2.05, 15.39, 0.09, 'seed', true, null),
   ('1e02af1a-4d88-55f5-9592-62945a1ad86b', 'Papas fritas', array['papas', 'patatas fritas'], 'g', 312, 3.43, 37.64, 14.73, 'seed', true, null),
   ('2515516c-8dd8-5fc4-9816-0e61519b91ac', 'Choclo', array['maíz', 'elote', 'mazorca'], 'g', 96, 3.41, 18.58, 1.5, 'seed', true, null),
   ('a7caca7f-fee9-5efe-a024-91b786ab2ffb', 'Porotos cocidos', array['porotos', 'frijoles', 'judías', 'porotos tórtola'], 'g', 136, 9.34, 15.86, 0.46, 'seed', true, null),
+  ('846d69df-769a-512e-9365-d03376891ffd', 'Porotos secos', array['porotos crudos', 'porotos tórtola'], 'g', 335, 23.03, 35.35, 1.23, 'seed', true, null),
   ('cea7aadf-1c74-507d-b2d6-7f43468a5907', 'Lentejas cocidas', array['lentejas'], 'g', 116, 9.02, 12.23, 0.38, 'seed', true, null),
+  ('6f9ccb03-1e2c-51a3-8736-35f0d095dbee', 'Lentejas secas', array['lentejas crudas'], 'g', 352, 24.63, 52.65, 1.06, 'seed', true, null),
   ('26fa4489-26d5-520f-91a1-be88ef667cf5', 'Garbanzos cocidos', array['garbanzos'], 'g', 164, 8.86, 19.82, 2.59, 'seed', true, null),
+  ('4f5943b4-88ed-5628-b2b9-2985288e98d7', 'Garbanzos secos', array['garbanzos crudos'], 'g', 378, 20.47, 50.75, 6.04, 'seed', true, null),
   ('cbecab54-830c-532e-bca6-635d8e8fdbd5', 'Leche entera', array['leche'], 'ml', 60, 3.28, 4.67, 3.2, 'seed', true, null),
   ('32110196-3193-5409-a8ce-06322fd6053e', 'Leche descremada', array['leche', 'leche light'], 'ml', 34, 3.43, 4.89, 0.08, 'seed', true, null),
   ('c64b57ba-c890-5c0d-b666-b873cfd8363d', 'Yogur natural', array['yogurt', 'yoghurt'], 'g', 77.95, 3.82, 5.57, 4.48, 'seed', true, null),
@@ -95,15 +116,20 @@ values
   ('d4c05d26-a703-5d31-8d1b-5132820a7e48', 'Huevo', array['huevo crudo'], 'g', 148, 12.4, 0.96, 9.96, 'seed', true, null),
   ('be4880c5-26f6-57e8-80db-4cb76a3f7f65', 'Huevo duro', array['huevo cocido'], 'g', 155, 12.58, 1.12, 10.61, 'seed', true, null),
   ('5ac37550-5292-5fde-b234-199d0d91bb3a', 'Pechuga de pollo cocida', array['pollo', 'pechuga'], 'g', 165, 31.02, 0, 3.57, 'seed', true, null),
+  ('681aab0f-1d88-54d8-8988-d33ef0f71bbc', 'Pechuga de pollo cruda', array['pollo crudo', 'pechuga cruda', 'pechuga deshuesada'], 'g', 120, 22.5, 0, 2.62, 'seed', true, null),
   ('8b6d2bbf-97b8-55d7-990b-69ea026a5339', 'Trutro de pollo cocido', array['pollo', 'trutro', 'muslo'], 'g', 179, 24.76, 0, 8.15, 'seed', true, null),
+  ('7abf3f7d-1a57-5c9d-879f-32f25c3571b0', 'Trutro de pollo crudo', array['trutro crudo', 'muslo crudo'], 'g', 121, 19.66, 0, 4.12, 'seed', true, null),
   ('5ed1a9f3-6ceb-5ec5-8eb3-386fe672a414', 'Carne molida cocida', array['carne molida', 'vacuno', 'carne picada'], 'g', 217, 26.11, 0, 11.75, 'seed', true, null),
+  ('b0e4abcd-fb00-5ce9-94ec-bc380e3665fe', 'Carne molida cruda', array['carne molida', 'carne picada'], 'g', 184.86, 18.16, 0, 12.85, 'seed', true, null),
   ('710aa37a-f228-5d22-aea4-76ee38bc91fa', 'Posta de vacuno cocida', array['posta', 'vacuno', 'carne'], 'g', 157, 29.52, 0, 3.43, 'seed', true, null),
+  ('98a92636-58f9-5671-9a0d-be4fb67d52b3', 'Posta de vacuno cruda', array['posta', 'vacuno crudo'], 'g', 122, 23.4, 0, 2.48, 'seed', true, null),
   ('55d69d0f-33fc-504d-97f0-08a5edf996d1', 'Lomo de cerdo cocido', array['cerdo', 'chancho', 'filete de cerdo'], 'g', 143, 26.17, 0, 3.51, 'seed', true, null),
   ('6ef38efc-42fe-5644-a12f-bb3bb307bbd0', 'Jamón de cerdo', array['jamón'], 'g', 106, 16.7, 0.27, 3.73, 'seed', true, null),
   ('23a02fac-0342-5909-bee5-54d3d343305e', 'Pechuga de pavo cocida', array['pavo'], 'g', 94, 20.6, 0.3, 1.1, 'seed', true, null),
   ('4447dcfe-a318-5ef1-89d3-ce5276d26b08', 'Vienesa', array['salchicha', 'hot dog'], 'g', 290, 10.26, 4.17, 25.76, 'seed', true, null),
   ('760b667a-92dc-5e3e-99bf-e08d0abd2f45', 'Atún en agua', array['atún'], 'g', 90, 19, 0.08, 0.94, 'seed', true, null),
   ('fecae935-7f9b-5032-9780-85d4a1e9c170', 'Salmón cocido', array['salmón'], 'g', 206, 22.1, 0, 12.35, 'seed', true, null),
+  ('db31aedb-ae64-5e78-aeea-d58f0242a6ad', 'Salmón crudo', array['salmón'], 'g', 197.29, 20.32, 0, 13.11, 'seed', true, null),
   ('7ff8520a-0974-5ad0-8a68-f436c7ecd53f', 'Palta Hass', array['palta', 'aguacate'], 'g', 223.33, 1.81, 8.32, 20.31, 'seed', true, null),
   ('49c38405-3524-5b79-8b91-4beab9dd6dec', 'Plátano', array['banana', 'banano'], 'g', 97, 0.74, 21.3, 0.29, 'seed', true, null),
   ('c6f9d4ab-f67a-50b4-8a2a-30eca76632c5', 'Manzana', array['manzana roja'], 'g', 61, 0.13, 12.7, 0.15, 'seed', true, null),
@@ -138,7 +164,8 @@ values
   ('5c808485-f93f-58c1-a03c-5a34ad7f1105', 'Jugo de naranja', array['jugo', 'zumo de naranja'], 'ml', 46.51, 0.81, 10.01, 0.36, 'seed', true, null),
   ('fbc8f1ab-40e8-5ba3-b4c2-3d579bea886b', 'Bebida cola', array['bebida', 'gaseosa', 'refresco'], 'ml', 42, 0, 10.36, 0.25, 'seed', true, null),
   ('4183da94-b4d7-53b7-8c73-b6b4fc1de7c5', 'Café', array['café negro', 'café de grano'], 'ml', 1, 0.12, 0, 0.02, 'seed', true, null),
-  ('be1c5285-e0dc-50ad-ba66-77a12402c948', 'Hallulla', array['pan'], 'g', 317.6, 7.67, 53.71, 7.98, 'seed', true, null);
+  ('be1c5285-e0dc-50ad-ba66-77a12402c948', 'Hallulla', array['pan'], 'g', 317.6, 7.67, 53.71, 7.98, 'seed', true, null)
+on conflict (id) do nothing;
 
 insert into public.food_portions (id, food_id, name, grams, is_default)
 values
@@ -240,4 +267,18 @@ values
   ('05999a13-d03d-5de8-ae71-4abe2e1d0d80', '5c808485-f93f-58c1-a03c-5a34ad7f1105', '1 taza', 248, false),
   ('c1f46744-a07a-5258-b785-dd59ea02e25e', 'fbc8f1ab-40e8-5ba3-b4c2-3d579bea886b', '1 vaso (200 ml)', 200, true),
   ('73ce0e3d-737a-5b2b-a28a-6a4e8e8d097a', 'fbc8f1ab-40e8-5ba3-b4c2-3d579bea886b', '1 lata (350 ml)', 350, false),
-  ('465f474f-d232-5ce5-838a-dbb4ec44c40f', '4183da94-b4d7-53b7-8c73-b6b4fc1de7c5', '1 taza', 237, true);
+  ('465f474f-d232-5ce5-838a-dbb4ec44c40f', '4183da94-b4d7-53b7-8c73-b6b4fc1de7c5', '1 taza', 237, true),
+  ('8e9e9a62-62dc-5842-ab07-acc0c1e70ca0', '681aab0f-1d88-54d8-8988-d33ef0f71bbc', '1 pechuga', 272, true),
+  ('c32c168b-1ac2-53a8-94d2-ca33cba64272', '7abf3f7d-1a57-5c9d-879f-32f25c3571b0', '1 trutro corto sin piel', 149, true),
+  ('d699cb00-faab-5bfe-a9aa-e6f3c99c9050', 'b0e4abcd-fb00-5ce9-94ec-bc380e3665fe', '1 porción (100 g)', 100, true),
+  ('b73f1407-04fa-560b-9a0f-cd5b9f45596d', '98a92636-58f9-5671-9a0d-be4fb67d52b3', '1 porción (100 g)', 100, true),
+  ('21d7e527-ae8c-5d44-829f-7776bba06202', 'db31aedb-ae64-5e78-aeea-d58f0242a6ad', '1 porción (100 g)', 100, true),
+  ('860659ee-6994-5de9-9a0e-15a8a2556c80', '843de89d-894c-53a9-a02b-e0c9fcf8fb9e', '1 taza', 185, true),
+  ('76cf9429-df12-5677-9847-ce9dc94afaf5', 'cc1e994b-6cb3-593b-a0fe-0de818fc250d', '1 porción (57 g)', 57, true),
+  ('6f4aeeb0-502e-5376-928f-40dd57c73e23', '846d69df-769a-512e-9365-d03376891ffd', '1 taza', 195, true),
+  ('ccc398f1-2b32-5b6b-91b4-696a22894858', '6f9ccb03-1e2c-51a3-8736-35f0d095dbee', '1 taza', 192, true),
+  ('d1c063f0-4dda-54ab-8654-6c162b3be819', '6f9ccb03-1e2c-51a3-8736-35f0d095dbee', '1 cucharada', 12, false),
+  ('72130f8e-332a-5356-8a91-74bcdfd29491', '4f5943b4-88ed-5628-b2b9-2985288e98d7', '1 taza', 200, true),
+  ('63f78548-a0e2-5f2c-8ce7-bfb78fa8a44a', '54b7d5a0-5c65-5358-8373-0e3bacb8a9f4', '1 papa mediana', 213, true),
+  ('6764a3d8-efc6-5aae-bf0d-2b1b96d6587b', '54b7d5a0-5c65-5358-8373-0e3bacb8a9f4', '1 papa grande', 369, false)
+on conflict (id) do nothing;

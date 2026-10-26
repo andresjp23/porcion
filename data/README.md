@@ -32,3 +32,4 @@ Las filas de FAO/MINSAL llevan `licencia = nc`, así se pueden retirar si el pro
 1. Busca el alimento en [FoodData Central](https://fdc.nal.usda.gov/). Prefiere Foundation Foods si trae kcal y los tres macros; si no, usa SR Legacy.
 2. Agrega la fila con el nombre que se usa en Chile y sus alias, y sus porciones.
 3. Corre `npm run seed:build` y `npm test`.
+4. En producción, vuelve a cargar `supabase/seed.sql` con `psql`: salta lo que ya está y agrega lo nuevo. Si cambias los valores de un alimento existente, eso no se actualiza solo; hace falta un `update` a mano.
